@@ -71,9 +71,11 @@ class ScriptedClient:
         self._turns = list(turns)
         self._then = then
         self.seen: list[list[dict]] = []
+        self.forced: list[str | None] = []
 
-    def chat(self, *, messages, tools):
+    def chat(self, *, messages, tools, force=None):
         self.seen.append(list(messages))
+        self.forced.append(force)
         if self._turns:
             reply = self._turns.pop(0)
             if isinstance(reply, Exception):
@@ -275,6 +277,40 @@ class TestSqlWrittenAsProse:
     def test_extraction_ignores_a_non_select(self):
         assert sql_in("DELETE FROM t") is None
         assert sql_in("") is None
+
+
+class TestMakingItCommit:
+    """Asking a model to submit its answer is a request it can decline.
+
+    On the first live run it declined on every single question: explored
+    correctly, ran the right query, then answered in prose. Naming the function
+    in tool_choice makes the API require the call rather than offer it.
+    """
+
+    def test_the_nudge_turn_compels_the_answer_tool(self, box):
+        client = ScriptedClient(
+            says("There are 6 schools."),  # answers in prose, submits nothing
+            answers(GOOD_SQL),
+        )
+
+        Agent(client).solve("q", box)
+
+        assert client.forced == [None, ANSWER_TOOL["name"]]
+
+    def test_ordinary_turns_leave_the_choice_open(self, box):
+        # Forcing every turn would stop it exploring at all.
+        client = ScriptedClient(calls(("list_tables", {})), answers(GOOD_SQL))
+
+        Agent(client).solve("q", box)
+
+        assert client.forced == [None, None]
+
+    def test_it_is_only_forced_once(self, box):
+        client = ScriptedClient(then=says("still just talking"))
+
+        Agent(client, max_turns=4).solve("q", box)
+
+        assert client.forced.count(ANSWER_TOOL["name"]) == 1
 
 
 class TestWhatItCost:

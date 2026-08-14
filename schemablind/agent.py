@@ -149,11 +149,15 @@ class Agent:
         ]
         offered = SCHEMA + [ANSWER_TOOL]
         nudged = False
+        force_next: str | None = None
 
         for _ in range(self.max_turns):
             transcript.turns += 1
             try:
-                reply = self.client.chat(messages=messages, tools=offered)
+                reply = self.client.chat(
+                    messages=messages, tools=offered, force=force_next
+                )
+                force_next = None
             except QuotaExhausted:
                 raise
             except LLMError as exc:
@@ -182,6 +186,10 @@ class Agent:
                     nudged = True
                     transcript.nudges += 1
                     messages.append({"role": "user", "content": NUDGE})
+                    # Words alone did not work: on the first live run every
+                    # question ignored the request. Naming the function makes
+                    # the API require it.
+                    force_next = ANSWER_TOOL["name"]
                     continue
                 return self._fall_back(transcript, GAVE_UP)
 

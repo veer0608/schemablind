@@ -127,7 +127,9 @@ class Reply:
 class LLMClient(Protocol):
     model: str
 
-    def chat(self, *, messages: list[dict], tools: list[dict]) -> Reply: ...
+    def chat(
+        self, *, messages: list[dict], tools: list[dict], force: str | None = None
+    ) -> Reply: ...
 
 
 class LLMError(RuntimeError):
@@ -199,7 +201,9 @@ class OpenAICompatibleClient:
         #: A latency column measuring your own throttling is a wrong number.
         self._last_headers = None
 
-    def chat(self, *, messages: list[dict], tools: list[dict]) -> Reply:
+    def chat(
+        self, *, messages: list[dict], tools: list[dict], force: str | None = None
+    ) -> Reply:
         payload = {
             "model": self.model,
             "messages": messages,
@@ -207,7 +211,13 @@ class OpenAICompatibleClient:
         }
         if tools:
             payload["tools"] = as_tool_schema(tools)
-            payload["tool_choice"] = "auto"
+            # Naming a function makes the API require that call rather than
+            # merely offer it. Asking a model in words to submit its answer is
+            # a request it is free to decline -- and on the first live run it
+            # declined on every single question.
+            payload["tool_choice"] = (
+                {"type": "function", "function": {"name": force}} if force else "auto"
+            )
 
         # Pacing happens out here, before the clock starts. Inside the timed
         # region -- which is where it was, and where moving it to the top of
