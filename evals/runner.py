@@ -35,7 +35,7 @@ from schemablind.llm import QuotaExhausted, Usage, build_client
 from schemablind.sandbox import Sandbox
 from schemablind.scoring import CORRECT, Judgement, category, judge
 
-from .dataset import Question, database_for, load_questions, toy
+from .dataset import Question, bird, database_for, load_questions, toy
 
 HERE = Path(__file__).parent
 REPO = HERE.parent
@@ -380,6 +380,11 @@ def main(argv: list[str] | None = None) -> int:
             "scorer; anything else is a model, optionally 'provider:model'"
         ),
     )
+    parser.add_argument(
+        "--bird",
+        action="store_true",
+        help="use BIRD Mini-Dev from data/ instead of the toy set",
+    )
     parser.add_argument("--questions", type=Path, help="a BIRD-shaped questions json")
     parser.add_argument("--databases", type=Path, help="the directory of sqlite files")
     parser.add_argument("--split", choices=SPLITS)
@@ -399,6 +404,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.questions and args.databases:
         questions, databases = load_questions(args.questions), args.databases
+    elif args.bird:
+        questions, databases = bird()
     else:
         questions, databases = toy()
 

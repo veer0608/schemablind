@@ -65,3 +65,26 @@ def database_for(db_id: str, databases: Path) -> Path:
 def toy() -> tuple[list[Question], Path]:
     """The set that ships with the repo: no download, no key, still end to end."""
     return load_questions(TOY / "questions.json"), TOY / "databases"
+
+
+#: Where `minidev.zip` lands when unpacked into data/. Gitignored: 3.3GB of
+#: databases is a download, not a thing to commit.
+BIRD = HERE.parent / "data" / "minidev" / "MINIDEV"
+
+
+def bird() -> tuple[list[Question], Path]:
+    """BIRD Mini-Dev: 500 curated questions over 11 databases.
+
+    Read by exactly the loader above, unchanged -- the toy set was written in
+    BIRD's shape from the start so that arriving here would be a path change
+    and nothing else. It was.
+    """
+    questions = BIRD / "mini_dev_sqlite.json"
+    databases = BIRD / "dev_databases"
+    if not questions.is_file():
+        raise FileNotFoundError(
+            f"no BIRD Mini-Dev at {BIRD}. Download minidev.zip from "
+            f"https://bird-bench.oss-cn-beijing.aliyuncs.com/minidev.zip "
+            f"(764MB) and unpack it into data/."
+        )
+    return load_questions(questions), databases
