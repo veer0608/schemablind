@@ -161,8 +161,13 @@ class Agent:
             except QuotaExhausted:
                 raise
             except LLMError as exc:
-                transcript.stopped, transcript.error = FAILED, str(exc)
-                return transcript
+                # Do not discard the work. A call failing on turn seven says
+                # nothing about the query verified on turn six, and throwing
+                # that away turned six API errors into six "produced no query"
+                # -- a failure of the agent's reasoning, which is not what
+                # happened and not what the scorecard should say.
+                transcript.error = str(exc)
+                return self._fall_back(transcript, FAILED)
 
             if reply.usage:
                 transcript.usage.append(reply.usage)

@@ -488,6 +488,7 @@ def main(argv: list[str] | None = None) -> int:
                                 "answered_via": r.transcript.answered_via,
                                 "last_query": r.transcript.last_query,
                                 "stopped": r.transcript.stopped,
+                                "error": r.transcript.error,
                                 "tools": r.transcript.tools_used,
                                 "tool_args": [
                                     {name: args} for name, args in r.transcript.tool_calls

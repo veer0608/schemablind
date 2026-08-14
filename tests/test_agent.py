@@ -10,7 +10,15 @@ import json
 
 import pytest
 
-from schemablind.agent import ANSWERED, FAILED, GAVE_UP, OUT_OF_TURNS, Agent, sql_in
+from schemablind.agent import (
+    ANSWERED,
+    FAILED,
+    FROM_LAST_QUERY,
+    GAVE_UP,
+    OUT_OF_TURNS,
+    Agent,
+    sql_in,
+)
 from schemablind.llm import LLMError, QuotaExhausted, Reply, ToolCall, Usage
 from schemablind.sandbox import Sandbox
 from schemablind.tools import ANSWER_TOOL
@@ -223,6 +231,29 @@ class TestWhenItGoesWrong:
 
         assert transcript.stopped == FAILED
         assert "500" in transcript.error
+
+    def test_an_api_failure_does_not_discard_a_query_already_verified(self, box):
+        # Six of nineteen real questions were scored "produced no query" when
+        # the agent had in fact run a good one and the API then fell over on a
+        # later turn. That is a failure of the client, reported as a failure of
+        # the agent's reasoning.
+        client = ScriptedClient(
+            calls(("run_sql_readonly", {"sql": GOOD_SQL})),
+            LLMError("HTTP 429: rate limit"),
+        )
+
+        transcript = Agent(client).solve("q", box)
+
+        assert transcript.stopped == FAILED
+        assert transcript.sql == GOOD_SQL
+        assert transcript.answered_via == FROM_LAST_QUERY
+
+    def test_an_api_failure_before_any_query_still_produces_nothing(self, box):
+        client = ScriptedClient(LLMError("HTTP 429"))
+
+        transcript = Agent(client).solve("q", box)
+
+        assert transcript.sql is None
 
     def test_an_exhausted_daily_quota_stops_everything(self, box):
         # Must not be swallowed: every question after it would score zero for
