@@ -35,6 +35,11 @@ Work in this order:
 4. run_sql_readonly to try your query and see real rows.
 5. final_sql once, when the rows look right.
 
+Step 5 is not optional and it is not the same as telling me the answer. Running
+a query that returns the right rows does not submit it -- nothing is recorded
+until you call final_sql with that exact query. Do not reply with the answer in
+words. Do not stop after run_sql_readonly. Call final_sql.
+
 Rules:
 - Only SELECT and WITH will run. There is no writing to this database.
 - Column names are often abbreviated and are rarely what the question calls
@@ -53,6 +58,14 @@ _SQL_IN_TEXT = re.compile(
     re.I | re.S,
 )
 
+NUDGE = (
+    "You have not submitted anything yet. Running a query does not record it. "
+    "Call final_sql now with the single SELECT that answers the question."
+)
+
+SUBMITTED = "final_sql"
+FROM_LAST_QUERY = "its last verified query"
+
 ANSWERED = "answered"
 OUT_OF_TURNS = "ran out of turns"
 GAVE_UP = "stopped without a query"
@@ -70,6 +83,13 @@ class Transcript:
     usage: list[Usage] = field(default_factory=list)
     #: Times a query the agent ran came back as an error it then worked from.
     repairs: int = 0
+    #: Times it had to be reminded that an answer must be submitted.
+    nudges: int = 0
+    #: How the answer was arrived at -- submitted, or read off the
+    #: transcript because it never submitted one.
+    answered_via: str = SUBMITTED
+    #: The last query it ran successfully, whether or not it submitted it.
+    last_query: str | None = None
     error: str | None = None
 
     @property
@@ -128,6 +148,7 @@ class Agent:
             {"role": "user", "content": asked},
         ]
         offered = SCHEMA + [ANSWER_TOOL]
+        nudged = False
 
         for _ in range(self.max_turns):
             transcript.turns += 1
@@ -152,8 +173,17 @@ class Agent:
                     return transcript
                 if salvaged:
                     continue
-                transcript.stopped = GAVE_UP
-                return transcript
+                if not nudged:
+                    # Observed on the first live run: the agent explores
+                    # correctly, runs a query that returns the right rows, and
+                    # then reports the answer in prose without ever submitting
+                    # it. Giving up on that is scoring the protocol rather than
+                    # the SQL, so it gets told once and asked again.
+                    nudged = True
+                    transcript.nudges += 1
+                    messages.append({"role": "user", "content": NUDGE})
+                    continue
+                return self._fall_back(transcript, GAVE_UP)
 
             for call in reply.tool_calls:
                 transcript.tool_calls.append((call.name, call.arguments))
@@ -163,12 +193,43 @@ class Agent:
                         return transcript
                     continue
                 output = tools.call(call.name, call.arguments)
+                if call.name == "run_sql_readonly" and not output.startswith("ERROR:"):
+                    # The moment the agent is most likely to think it has
+                    # finished: it just saw the right rows. Six of twelve runs
+                    # stopped exactly here, so the reminder goes where the
+                    # mistake happens rather than only in the system prompt.
+                    ran = str(call.arguments.get("sql") or "").strip()
+                    if ran:
+                        transcript.last_query = ran
+                    output += (
+                        "\n(These rows are NOT submitted. If this is the answer, "
+                        "call final_sql with this exact query.)"
+                    )
                 if output.startswith("ERROR:"):
                     transcript.repairs += 1
                 messages.append(
                     {"role": "tool", "tool_call_id": call.id, "content": output}
                 )
 
+        return self._fall_back(transcript, OUT_OF_TURNS)
+
+    def _fall_back(self, transcript: Transcript, why: str) -> Transcript:
+        """Take the last query it ran and verified, if it never submitted one.
+
+        Not generosity -- reading the transcript. An agent that ran
+        `SELECT COUNT(*) ... WHERE cnty='Marin'`, saw the rows, and then said
+        "2" in prose has unambiguously told you which query it means. Where
+        several ran, the last successful one is the one it settled on.
+
+        Recorded as a separate route rather than folded into the score, because
+        how often the protocol has to be rescued is itself worth reporting.
+        """
+        if transcript.sql or not transcript.last_query:
+            transcript.stopped = why
+            return transcript
+        transcript.sql = transcript.last_query
+        transcript.stopped = why
+        transcript.answered_via = FROM_LAST_QUERY
         return transcript
 
     def _accept(

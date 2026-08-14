@@ -1,0 +1,1001 @@
+{
+  "oracle (gold SQL)": {
+    "abandoned": "",
+    "summary": {
+      "n": 12,
+      "execution_accuracy": 1.0,
+      "strict_accuracy": 1.0,
+      "produced_sql": 1.0,
+      "cost_per_question": 0.0,
+      "total_cost": 0.0,
+      "p50_latency_ms": 0.0,
+      "turns": 0,
+      "repairs": 0,
+      "tokens": 0
+    },
+    "by_split": {
+      "dev": {
+        "n": 12,
+        "execution_accuracy": 1.0,
+        "strict_accuracy": 1.0,
+        "produced_sql": 1.0,
+        "cost_per_question": 0.0,
+        "total_cost": 0.0,
+        "p50_latency_ms": 0.0,
+        "turns": 0,
+        "repairs": 0,
+        "tokens": 0
+      },
+      "test": {}
+    },
+    "failures": {},
+    "results": [
+      {
+        "question_id": 0,
+        "db_id": "school",
+        "question": "How many schools are in Marin county?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM schools WHERE cnty = 'Marin'",
+        "predicted_sql": "SELECT COUNT(*) FROM schools WHERE cnty = 'Marin'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 1,
+        "db_id": "school",
+        "question": "List the names of all charter schools.",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 2,
+        "db_id": "school",
+        "question": "Which subjects are recorded in the scores?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT subject FROM scores",
+        "predicted_sql": "SELECT DISTINCT subject FROM scores",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 3,
+        "db_id": "school",
+        "question": "How many students are in grade 12?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM students WHERE grade = '12'",
+        "predicted_sql": "SELECT COUNT(*) FROM students WHERE grade = '12'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 4,
+        "db_id": "school",
+        "question": "Which school opened most recently?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 5,
+        "db_id": "school",
+        "question": "What is the full name of the student with the highest math score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT st.full_name FROM students st JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+        "predicted_sql": "SELECT st.full_name FROM students st JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 6,
+        "db_id": "school",
+        "question": "What is the average reading score in each county?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty, AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'reading' GROUP BY s.cnty",
+        "predicted_sql": "SELECT s.cnty, AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'reading' GROUP BY s.cnty",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 7,
+        "db_id": "school",
+        "question": "Which schools have no students enrolled?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE sch_id NOT IN (SELECT sch_id FROM students)",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE sch_id NOT IN (SELECT sch_id FROM students)",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 8,
+        "db_id": "school",
+        "question": "How many students have no recorded reading score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM scores WHERE subject = 'reading' AND score IS NULL",
+        "predicted_sql": "SELECT COUNT(*) FROM scores WHERE subject = 'reading' AND score IS NULL",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 9,
+        "db_id": "school",
+        "question": "Which county has the highest average math score among its charter schools?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 AND sc.subject = 'math' GROUP BY s.cnty ORDER BY AVG(sc.score) DESC LIMIT 1",
+        "predicted_sql": "SELECT s.cnty FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 AND sc.subject = 'math' GROUP BY s.cnty ORDER BY AVG(sc.score) DESC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 10,
+        "db_id": "school",
+        "question": "For each county, how many charter schools are there and what is the average score across all subjects?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty, COUNT(DISTINCT s.sch_id), AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 GROUP BY s.cnty",
+        "predicted_sql": "SELECT s.cnty, COUNT(DISTINCT s.sch_id), AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 GROUP BY s.cnty",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      },
+      {
+        "question_id": 11,
+        "db_id": "school",
+        "question": "What is the name of the school attended by the student with the lowest math score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT s.sch_name FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score ASC LIMIT 1",
+        "predicted_sql": "SELECT s.sch_name FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score ASC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 0,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": null,
+        "stopped": "answered",
+        "tools": [],
+        "tool_args": [],
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost_usd": null,
+        "latency_ms": 0
+      }
+    ]
+  },
+  "openai/gpt-oss-20b": {
+    "abandoned": "stopped after 11 of 12: HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01kyw0066geyf9hjwgs1z5dpbe` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199088, Requested 1601. Please try again in 4m57.648s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+    "summary": {
+      "n": 11,
+      "execution_accuracy": 0.5454545454545454,
+      "strict_accuracy": 0.5454545454545454,
+      "produced_sql": 0.9090909090909091,
+      "cost_per_question": 0.0006846613636363636,
+      "total_cost": 0.007531275,
+      "p50_latency_ms": 3527.6274000061676,
+      "turns": 7.090909090909091,
+      "repairs": 0,
+      "tokens": 7885.454545454545
+    },
+    "by_split": {
+      "dev": {
+        "n": 11,
+        "execution_accuracy": 0.5454545454545454,
+        "strict_accuracy": 0.5454545454545454,
+        "produced_sql": 0.9090909090909091,
+        "cost_per_question": 0.0006846613636363636,
+        "total_cost": 0.007531275,
+        "p50_latency_ms": 3527.6274000061676,
+        "turns": 7.090909090909091,
+        "repairs": 0,
+        "tokens": 7885.454545454545
+      },
+      "test": {}
+    },
+    "failures": {
+      "wrong number of columns": 2,
+      "no query produced": 1,
+      "right shape, wrong values": 1,
+      "wrong number of rows": 1
+    },
+    "results": [
+      {
+        "question_id": 0,
+        "db_id": "school",
+        "question": "How many schools are in Marin county?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM schools WHERE cnty = 'Marin'",
+        "predicted_sql": "SELECT COUNT(*) AS num_schools FROM schools WHERE cnty='Marin';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 6,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT COUNT(*) AS num_schools FROM schools WHERE cnty='Marin';",
+        "stopped": "stopped without a query",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 10,
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS num_schools FROM schools WHERE cnty='Marin';"
+            }
+          }
+        ],
+        "prompt_tokens": 5626,
+        "completion_tokens": 227,
+        "cost_usd": 0.00049005,
+        "latency_ms": 2781.1
+      },
+      {
+        "question_id": 1,
+        "db_id": "school",
+        "question": "List the names of all charter schools.",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT sch_name FROM schools WHERE charter = 1",
+        "stopped": "answered",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT sch_name FROM schools WHERE charter = 1"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT sch_name FROM schools WHERE charter = 1"
+            }
+          }
+        ],
+        "prompt_tokens": 4440,
+        "completion_tokens": 214,
+        "cost_usd": 0.0003972,
+        "latency_ms": 3283.2
+      },
+      {
+        "question_id": 2,
+        "db_id": "school",
+        "question": "Which subjects are recorded in the scores?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT subject FROM scores",
+        "predicted_sql": "SELECT DISTINCT subject FROM scores ORDER BY subject;",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT DISTINCT subject FROM scores ORDER BY subject;",
+        "stopped": "stopped without a query",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT subject FROM scores ORDER BY subject;"
+            }
+          }
+        ],
+        "prompt_tokens": 4189,
+        "completion_tokens": 144,
+        "cost_usd": 0.00035737499999999995,
+        "latency_ms": 2172.4
+      },
+      {
+        "question_id": 3,
+        "db_id": "school",
+        "question": "How many students are in grade 12?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM students WHERE grade = '12'",
+        "predicted_sql": "SELECT COUNT(*) AS num_students FROM students WHERE grade = '12';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT COUNT(*) AS num_students FROM students WHERE grade = '12';",
+        "stopped": "stopped without a query",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS num_students FROM students WHERE grade = '12';"
+            }
+          }
+        ],
+        "prompt_tokens": 4282,
+        "completion_tokens": 168,
+        "cost_usd": 0.00037155,
+        "latency_ms": 3144.5
+      },
+      {
+        "question_id": 4,
+        "db_id": "school",
+        "question": "Which school opened most recently?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1",
+        "predicted_sql": "SELECT sch_name, opened FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1;",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 6,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT sch_name, opened FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1;",
+        "stopped": "answered",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 10,
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT sch_name, opened FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1;"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT sch_name, opened FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1;"
+            }
+          }
+        ],
+        "prompt_tokens": 5973,
+        "completion_tokens": 337,
+        "cost_usd": 0.000549075,
+        "latency_ms": 3527.6
+      },
+      {
+        "question_id": 5,
+        "db_id": "school",
+        "question": "What is the full name of the student with the highest math score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT st.full_name FROM students st JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+        "predicted_sql": null,
+        "correct": false,
+        "exact": false,
+        "failure": "no query produced",
+        "turns": 7,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT s.full_name FROM students s JOIN scores sc ON s.stu_id = sc.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+        "stopped": "the model call failed",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.full_name FROM students s JOIN scores sc ON s.stu_id = sc.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1"
+            }
+          }
+        ],
+        "prompt_tokens": 5269,
+        "completion_tokens": 234,
+        "cost_usd": 0.00046537499999999997,
+        "latency_ms": 2937.8
+      },
+      {
+        "question_id": 6,
+        "db_id": "school",
+        "question": "What is the average reading score in each county?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty, AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'reading' GROUP BY s.cnty",
+        "predicted_sql": "SELECT s.cnty AS county, AVG(sc.score) AS avg_reading_score\nFROM scores sc\nJOIN students st ON sc.stu_id = st.stu_id\nJOIN schools s ON st.sch_id = s.sch_id\nWHERE sc.subject = 'reading'\nGROUP BY s.cnty\nORDER BY s.cnty",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 12,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT sc.* FROM scores sc JOIN students st ON sc.stu_id = st.stu_id WHERE st.sch_id IN (5,6)",
+        "stopped": "answered",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly",
+          "sample_rows",
+          "run_sql_readonly",
+          "sample_rows",
+          "sample_rows",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {
+              "": ""
+            }
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.cnty AS county, AVG(sc.score) AS avg_reading_score\nFROM scores sc\nJOIN students st ON sc.stu_id = st.stu_id\nJOIN schools s ON st.sch_id = s.sch_id\nWHERE sc.subject = 'Reading'\nGROUP BY s.cnty\nORDER BY s.cnty"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 20,
+              "table": "scores"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.cnty AS county, AVG(sc.score) AS avg_reading_score\nFROM scores sc\nJOIN students st ON sc.stu_id = st.stu_id\nJOIN schools s ON st.sch_id = s.sch_id\nWHERE sc.subject = 'reading'\nGROUP BY s.cnty\nORDER BY s.cnty"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 20,
+              "table": "students"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 20,
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT sc.* FROM scores sc JOIN students st ON sc.stu_id = st.stu_id WHERE st.sch_id IN (5,6)"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT s.cnty AS county, AVG(sc.score) AS avg_reading_score\nFROM scores sc\nJOIN students st ON sc.stu_id = st.stu_id\nJOIN schools s ON st.sch_id = s.sch_id\nWHERE sc.subject = 'reading'\nGROUP BY s.cnty\nORDER BY s.cnty"
+            }
+          }
+        ],
+        "prompt_tokens": 16600,
+        "completion_tokens": 833,
+        "cost_usd": 0.0014948999999999997,
+        "latency_ms": 6531.0
+      },
+      {
+        "question_id": 7,
+        "db_id": "school",
+        "question": "Which schools have no students enrolled?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE sch_id NOT IN (SELECT sch_id FROM students)",
+        "predicted_sql": "SELECT s.sch_id, s.sch_name FROM schools s LEFT JOIN students st ON s.sch_id = st.sch_id WHERE st.stu_id IS NULL",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 10,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT s.sch_id, s.sch_name FROM schools s LEFT JOIN students st ON s.sch_id = st.sch_id WHERE st.stu_id IS NULL",
+        "stopped": "stopped without a query",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "describe_table",
+          "sample_rows",
+          "sample_rows",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 10,
+              "table": "students"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 10,
+              "table": "schools"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) FROM students WHERE sch_id=6"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.sch_id, s.sch_name FROM schools s LEFT JOIN students st ON s.sch_id = st.sch_id WHERE st.stu_id IS NULL"
+            }
+          }
+        ],
+        "prompt_tokens": 11698,
+        "completion_tokens": 478,
+        "cost_usd": 0.00102075,
+        "latency_ms": 5370.9
+      },
+      {
+        "question_id": 8,
+        "db_id": "school",
+        "question": "How many students have no recorded reading score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM scores WHERE subject = 'reading' AND score IS NULL",
+        "predicted_sql": "SELECT COUNT(*) AS cnt FROM students s LEFT JOIN scores sc ON s.stu_id=sc.stu_id AND sc.subject='reading' WHERE sc.score IS NULL",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 8,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT COUNT(*) AS cnt FROM students s LEFT JOIN scores sc ON s.stu_id=sc.stu_id AND sc.subject='reading' WHERE sc.score IS NULL",
+        "stopped": "stopped without a query",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 20,
+              "table": "scores"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.stu_id, s.full_name, sc.score FROM students s LEFT JOIN scores sc ON s.stu_id=sc.stu_id AND sc.subject='reading' LIMIT 20"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS cnt FROM students s LEFT JOIN scores sc ON s.stu_id=sc.stu_id AND sc.subject='reading' WHERE sc.score IS NULL"
+            }
+          }
+        ],
+        "prompt_tokens": 9028,
+        "completion_tokens": 513,
+        "cost_usd": 0.000831,
+        "latency_ms": 6434.8
+      },
+      {
+        "question_id": 9,
+        "db_id": "school",
+        "question": "Which county has the highest average math score among its charter schools?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 AND sc.subject = 'math' GROUP BY s.cnty ORDER BY AVG(sc.score) DESC LIMIT 1",
+        "predicted_sql": "SELECT cnty\nFROM schools s\nJOIN scores sc ON s.sch_id = sc.stu_id\nWHERE s.charter = 1 AND sc.subject = 'math'\nGROUP BY cnty\nORDER BY AVG(score) DESC\nLIMIT 1;",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 7,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT cnty\nFROM schools s\nJOIN scores sc ON s.sch_id = sc.stu_id\nWHERE s.charter = 1 AND sc.subject = 'math'\nGROUP BY cnty\nORDER BY AVG(score) DESC\nLIMIT 1;",
+        "stopped": "answered",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT cnty, AVG(score) AS avg_math_score\nFROM schools s\nJOIN scores sc ON s.sch_id = sc.stu_id\nWHERE s.charter = 1 AND sc.subject = 'math'\nGROUP BY cnty\nORDER BY avg_math_score DESC\nLIMIT 1;"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT cnty\nFROM schools s\nJOIN scores sc ON s.sch_id = sc.stu_id\nWHERE s.charter = 1 AND sc.subject = 'math'\nGROUP BY cnty\nORDER BY AVG(score) DESC\nLIMIT 1;"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT cnty\nFROM schools s\nJOIN scores sc ON s.sch_id = sc.stu_id\nWHERE s.charter = 1 AND sc.subject = 'math'\nGROUP BY cnty\nORDER BY AVG(score) DESC\nLIMIT 1;"
+            }
+          }
+        ],
+        "prompt_tokens": 7423,
+        "completion_tokens": 610,
+        "cost_usd": 0.0007397250000000001,
+        "latency_ms": 4240.7
+      },
+      {
+        "question_id": 10,
+        "db_id": "school",
+        "question": "For each county, how many charter schools are there and what is the average score across all subjects?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT s.cnty, COUNT(DISTINCT s.sch_id), AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 GROUP BY s.cnty",
+        "predicted_sql": "SELECT s.cnty AS county,\n       COUNT(DISTINCT CASE WHEN s.charter = 1 THEN s.sch_id END) AS charter_school_count,\n       AVG(sc.score) AS avg_score\nFROM schools s\nJOIN students st ON st.sch_id = s.sch_id\nJOIN scores sc ON sc.stu_id = st.stu_id\nGROUP BY s.cnty\nORDER BY s.cnty;",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of rows",
+        "turns": 7,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT s.cnty AS county,\n       COUNT(DISTINCT CASE WHEN s.charter = 1 THEN s.sch_id END) AS charter_school_count,\n       AVG(sc.score) AS avg_score\nFROM schools s\nJOIN students st ON st.sch_id = s.sch_id\nJOIN scores sc ON sc.stu_id = st.stu_id\nGROUP BY s.cnty\nORDER BY s.cnty;",
+        "stopped": "answered",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "table": "schools"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "scores"
+            }
+          },
+          {
+            "describe_table": {
+              "table": "students"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT s.cnty AS county,\n       COUNT(DISTINCT CASE WHEN s.charter = 1 THEN s.sch_id END) AS charter_school_count,\n       AVG(sc.score) AS avg_score\nFROM schools s\nJOIN students st ON st.sch_id = s.sch_id\nJOIN scores sc ON sc.stu_id = st.stu_id\nGROUP BY s.cnty\nORDER BY s.cnty;"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT s.cnty AS county,\n       COUNT(DISTINCT CASE WHEN s.charter = 1 THEN s.sch_id END) AS charter_school_count,\n       AVG(sc.score) AS avg_score\nFROM schools s\nJOIN students st ON st.sch_id = s.sch_id\nJOIN scores sc ON sc.stu_id = st.stu_id\nGROUP BY s.cnty\nORDER BY s.cnty;"
+            }
+          }
+        ],
+        "prompt_tokens": 7653,
+        "completion_tokens": 801,
+        "cost_usd": 0.0008142749999999999,
+        "latency_ms": 4404.5
+      }
+    ]
+  }
+}

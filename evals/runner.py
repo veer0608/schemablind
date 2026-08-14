@@ -473,7 +473,18 @@ def main(argv: list[str] | None = None) -> int:
                                 "failure": r.failure,
                                 "turns": r.transcript.turns,
                                 "repairs": r.transcript.repairs,
+                                "nudges": r.transcript.nudges,
+                                # How the answer was reached, and what it ran
+                                # last. Without these a miss cannot be told
+                                # apart from a bug in the harness, which cost a
+                                # live question to work out once already.
+                                "answered_via": r.transcript.answered_via,
+                                "last_query": r.transcript.last_query,
+                                "stopped": r.transcript.stopped,
                                 "tools": r.transcript.tools_used,
+                                "tool_args": [
+                                    {name: args} for name, args in r.transcript.tool_calls
+                                ],
                                 "prompt_tokens": r.transcript.prompt_tokens,
                                 "completion_tokens": r.transcript.completion_tokens,
                                 "cost_usd": r.transcript.cost_usd,

@@ -1,0 +1,181 @@
+{
+  "openai/gpt-oss-20b": {
+    "abandoned": "",
+    "summary": {
+      "n": 6,
+      "execution_accuracy": 0.6666666666666666,
+      "strict_accuracy": 0.6666666666666666,
+      "produced_sql": 0.6666666666666666,
+      "cost_per_question": 0.00044716250000000003,
+      "total_cost": 0.002682975,
+      "p50_latency_ms": 3163.7279000206036,
+      "turns": 5.833333333333333,
+      "repairs": 0,
+      "tokens": 5271.166666666667
+    },
+    "by_split": {
+      "dev": {
+        "n": 6,
+        "execution_accuracy": 0.6666666666666666,
+        "strict_accuracy": 0.6666666666666666,
+        "produced_sql": 0.6666666666666666,
+        "cost_per_question": 0.00044716250000000003,
+        "total_cost": 0.002682975,
+        "p50_latency_ms": 3163.7279000206036,
+        "turns": 5.833333333333333,
+        "repairs": 0,
+        "tokens": 5271.166666666667
+      },
+      "test": {}
+    },
+    "failures": {
+      "no query produced": 2
+    },
+    "results": [
+      {
+        "question_id": 0,
+        "db_id": "school",
+        "question": "How many schools are in Marin county?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM schools WHERE cnty = 'Marin'",
+        "predicted_sql": null,
+        "correct": false,
+        "exact": false,
+        "failure": "no query produced",
+        "turns": 6,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly"
+        ],
+        "prompt_tokens": 4466,
+        "completion_tokens": 201,
+        "cost_usd": 0.00039525,
+        "latency_ms": 3061.1
+      },
+      {
+        "question_id": 1,
+        "db_id": "school",
+        "question": "List the names of all charter schools.",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE charter = 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "prompt_tokens": 4440,
+        "completion_tokens": 214,
+        "cost_usd": 0.0003972,
+        "latency_ms": 2825.5
+      },
+      {
+        "question_id": 2,
+        "db_id": "school",
+        "question": "Which subjects are recorded in the scores?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT subject FROM scores",
+        "predicted_sql": "SELECT DISTINCT subject FROM scores ORDER BY subject;",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "prompt_tokens": 4189,
+        "completion_tokens": 144,
+        "cost_usd": 0.00035737499999999995,
+        "latency_ms": 3117.9
+      },
+      {
+        "question_id": 3,
+        "db_id": "school",
+        "question": "How many students are in grade 12?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(*) FROM students WHERE grade = '12'",
+        "predicted_sql": "SELECT COUNT(*) AS count FROM students WHERE grade='12';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 6,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly"
+        ],
+        "prompt_tokens": 5881,
+        "completion_tokens": 233,
+        "cost_usd": 0.000510975,
+        "latency_ms": 3476.8
+      },
+      {
+        "question_id": 4,
+        "db_id": "school",
+        "question": "Which school opened most recently?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1",
+        "predicted_sql": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY date(opened) DESC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 6,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly"
+        ],
+        "prompt_tokens": 6000,
+        "completion_tokens": 355,
+        "cost_usd": 0.0005564999999999999,
+        "latency_ms": 3209.6
+      },
+      {
+        "question_id": 5,
+        "db_id": "school",
+        "question": "What is the full name of the student with the highest math score?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT st.full_name FROM students st JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+        "predicted_sql": null,
+        "correct": false,
+        "exact": false,
+        "failure": "no query produced",
+        "turns": 7,
+        "repairs": 0,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "prompt_tokens": 5269,
+        "completion_tokens": 235,
+        "cost_usd": 0.000465675,
+        "latency_ms": 3974.4
+      }
+    ]
+  }
+}

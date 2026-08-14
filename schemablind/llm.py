@@ -193,6 +193,11 @@ class OpenAICompatibleClient:
         self._timeout = timeout
         self._attempts = attempts
         self._temperature = temperature
+        #: Rate-limit headers from the previous call. Pacing happens before the
+        #: next request rather than after the last one, so that the latency this
+        #: reports is the model's response time and not this client's own sleep.
+        #: A latency column measuring your own throttling is a wrong number.
+        self._last_headers = None
 
     def chat(self, *, messages: list[dict], tools: list[dict]) -> Reply:
         payload = {
@@ -203,6 +208,14 @@ class OpenAICompatibleClient:
         if tools:
             payload["tools"] = as_tool_schema(tools)
             payload["tool_choice"] = "auto"
+
+        # Pacing happens out here, before the clock starts. Inside the timed
+        # region -- which is where it was, and where moving it to the top of
+        # _post did not get it out of -- the reported latency is this client's
+        # own sleep rather than the model's response time.
+        if self._last_headers is not None:
+            self._pace(self._last_headers)
+            self._last_headers = None
 
         started = time.perf_counter()
         body = self._post("/chat/completions", payload)
@@ -248,7 +261,6 @@ class OpenAICompatibleClient:
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
         data = json.dumps(payload).encode()
-
         last = "no attempt was made"
         for attempt in range(1, self._attempts + 1):
             request = urllib.request.Request(
@@ -257,7 +269,7 @@ class OpenAICompatibleClient:
             try:
                 with urllib.request.urlopen(request, timeout=self._timeout) as response:
                     body = json.loads(response.read().decode())
-                    self._pace(response.headers)
+                    self._last_headers = response.headers
                     return body
             except urllib.error.HTTPError as exc:
                 detail = exc.read().decode(errors="replace")[:400]
