@@ -106,10 +106,25 @@ python -m schemablind ask "which county has the highest average math score among
 It prints the query, the rows, the turns and tools it took to get there, and
 what it cost. Pass `--gold "SELECT ..."` and it scores itself.
 
-Run the eval:
+Run the eval on the toy set that ships with the repo:
 
 ```bash
 python -m evals.runner --solvers oracle,mute
+```
+
+For the real thing, fetch BIRD Mini-Dev — 500 questions over 11 databases,
+764MB zipped and 3.3GB unpacked, into the gitignored `data/`:
+
+```bash
+curl -L -o data/minidev.zip https://bird-bench.oss-cn-beijing.aliyuncs.com/minidev.zip
+```
+
+Unzip it there, then `--bird` selects it. The loader needs no changes: the toy
+set was written in BIRD's own shape so that arriving here would be a path
+change and nothing else.
+
+```bash
+python -m evals.runner --bird --solvers oracle
 ```
 
 ## The scorecard
@@ -136,19 +151,23 @@ The model rows arrive when the budget question below is settled.
 Worth stating up front, because it is the thing that decides whether the
 project is finishable rather than a detail discovered halfway through.
 
-A schema-blind agent is not a single prompt. Five turns with a growing context
-runs about **20k input and 1k output tokens per question**.
+A schema-blind agent is not a single prompt: on real BIRD databases it runs
+**9.2 turns and 13,600 tokens per question**, measured over 19 live questions.
+Two earlier estimates were both wrong and both too low — reasoning from schema
+sizes gave 8,750, and the toy set suggested 9,500. Real questions need more
+turns, and turns are what cost.
 
 | | free tier | paid |
 |---|---|---|
-| per question | ~20k tokens | ~$0.0018 |
-| daily cap | 100k tokens per model | none |
-| **questions/day/model** | **~5** | unlimited |
-| 150 questions × 3 models | **~90 days** | **~$1** |
+| per question | ~13,600 tokens | ~$0.0016 |
+| daily cap | 100–200k tokens per model | none |
+| **questions/day/model** | **~15** | unlimited |
+| **500 questions × 3 models** | **~34 days per model** | **~$2.40** |
 
 The free tier's daily token cap is what blocks this, not the money — the whole
-eval costs about a dollar. And that daily limit appears in **no response
-header**: the per-minute bucket reads a healthy 12,000 while the daily budget
+three-model comparison costs about **$1.50**. And that daily limit appears in
+**no response header**: the per-minute bucket reads a healthy 12,000 while the
+daily budget
 is already gone, and the real limit is only named in the body of the 429 that
 eventually refuses you. So a daily refusal is its own error type here, and a
 run that hits one is **abandoned rather than scored** — the questions it never
