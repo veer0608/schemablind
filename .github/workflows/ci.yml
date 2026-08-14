@@ -1,0 +1,53 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Tests
+        run: python -m pytest -q
+
+      # The unit tests could all pass while the harness quietly stopped
+      # measuring anything, so it is made to prove itself end to end: the gold
+      # queries must score 100% and an agent that produces nothing must score
+      # 0%. Neither needs a model or a key, so this is free and always runs.
+      - name: The harness must prove itself
+        run: python -m evals.runner --check
+
+      - name: The agent must not be able to write to a database
+        run: |
+          python - <<'PY'
+          import sqlite3, sys
+          from pathlib import Path
+          from schemablind.sandbox import Sandbox
+          db = Path("evals/toy/databases/school/school.sqlite")
+          before = sqlite3.connect(db).execute("SELECT COUNT(*) FROM schools").fetchone()
+          with Sandbox(db) as box:
+              for sql in ("DELETE FROM schools", "DROP TABLE schools",
+                          "UPDATE schools SET cnty='x'", "SELECT 1; DROP TABLE schools",
+                          "ATTACH DATABASE '/tmp/x.db' AS x"):
+                  assert not box.query(sql).ok, f"the sandbox ran {sql!r}"
+          after = sqlite3.connect(db).execute("SELECT COUNT(*) FROM schools").fetchone()
+          assert before == after, "the database changed"
+          print("the sandbox held")
+          PY

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "schemablind"
+version = "0.1.0"
+description = "A SQL agent given no schema, scored on execution accuracy."
+readme = "README.md"
+requires-python = ">=3.11"
+# Nothing. The sandbox is sqlite3 from the standard library and the model
+# client is urllib, so this installs and runs on a bare Python.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+schemablind = "schemablind.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["schemablind*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,98 @@
+[
+  {
+    "question_id": 0,
+    "db_id": "school",
+    "question": "How many schools are in Marin county?",
+    "evidence": "",
+    "SQL": "SELECT COUNT(*) FROM schools WHERE cnty = 'Marin'",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 1,
+    "db_id": "school",
+    "question": "List the names of all charter schools.",
+    "evidence": "a charter school has charter = 1",
+    "SQL": "SELECT sch_name FROM schools WHERE charter = 1",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 2,
+    "db_id": "school",
+    "question": "Which subjects are recorded in the scores?",
+    "evidence": "",
+    "SQL": "SELECT DISTINCT subject FROM scores",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 3,
+    "db_id": "school",
+    "question": "How many students are in grade 12?",
+    "evidence": "grade is stored as text",
+    "SQL": "SELECT COUNT(*) FROM students WHERE grade = '12'",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 4,
+    "db_id": "school",
+    "question": "Which school opened most recently?",
+    "evidence": "schools with no opening date should be ignored",
+    "SQL": "SELECT sch_name FROM schools WHERE opened IS NOT NULL ORDER BY opened DESC LIMIT 1",
+    "difficulty": "simple"
+  },
+  {
+    "question_id": 5,
+    "db_id": "school",
+    "question": "What is the full name of the student with the highest math score?",
+    "evidence": "",
+    "SQL": "SELECT st.full_name FROM students st JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score DESC LIMIT 1",
+    "difficulty": "moderate"
+  },
+  {
+    "question_id": 6,
+    "db_id": "school",
+    "question": "What is the average reading score in each county?",
+    "evidence": "",
+    "SQL": "SELECT s.cnty, AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'reading' GROUP BY s.cnty",
+    "difficulty": "moderate"
+  },
+  {
+    "question_id": 7,
+    "db_id": "school",
+    "question": "Which schools have no students enrolled?",
+    "evidence": "",
+    "SQL": "SELECT sch_name FROM schools WHERE sch_id NOT IN (SELECT sch_id FROM students)",
+    "difficulty": "moderate"
+  },
+  {
+    "question_id": 8,
+    "db_id": "school",
+    "question": "How many students have no recorded reading score?",
+    "evidence": "a missing score is stored as NULL, not as zero",
+    "SQL": "SELECT COUNT(*) FROM scores WHERE subject = 'reading' AND score IS NULL",
+    "difficulty": "moderate"
+  },
+  {
+    "question_id": 9,
+    "db_id": "school",
+    "question": "Which county has the highest average math score among its charter schools?",
+    "evidence": "a charter school has charter = 1",
+    "SQL": "SELECT s.cnty FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 AND sc.subject = 'math' GROUP BY s.cnty ORDER BY AVG(sc.score) DESC LIMIT 1",
+    "difficulty": "challenging"
+  },
+  {
+    "question_id": 10,
+    "db_id": "school",
+    "question": "For each county, how many charter schools are there and what is the average score across all subjects?",
+    "evidence": "a charter school has charter = 1",
+    "SQL": "SELECT s.cnty, COUNT(DISTINCT s.sch_id), AVG(sc.score) FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE s.charter = 1 GROUP BY s.cnty",
+    "difficulty": "challenging"
+  },
+  {
+    "question_id": 11,
+    "db_id": "school",
+    "question": "What is the name of the school attended by the student with the lowest math score?",
+    "evidence": "",
+    "SQL": "SELECT s.sch_name FROM schools s JOIN students st ON st.sch_id = s.sch_id JOIN scores sc ON sc.stu_id = st.stu_id WHERE sc.subject = 'math' ORDER BY sc.score ASC LIMIT 1",
+    "difficulty": "moderate"
+  }
+]

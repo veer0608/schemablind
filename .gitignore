@@ -1,0 +1,22 @@
+# Keys. Never.
+.env
+
+# BIRD ships gigabytes of databases; they are downloaded, not committed.
+/data/
+/bird/
+dev_databases/
+mini_dev_databases/
+*.zip
+
+# ...except the toy database, which is generated from tests/conftest.py and is
+# small enough to be worth having in the repo so the harness runs on a clone.
+!evals/toy/databases/**/*.sqlite
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
