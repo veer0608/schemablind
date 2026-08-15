@@ -45,6 +45,28 @@ ORACLE = "oracle (gold SQL)"
 MUTE = "mute (no SQL)"
 
 
+QUARANTINE = HERE / "quarantine.json"
+
+
+def quarantined() -> set[tuple[str, int]]:
+    """Held-out questions whose answers have since been looked at.
+
+    A question stops being held out the moment someone reads its gold SQL while
+    debugging, whatever the split says. That happened here: failures were
+    printed without filtering by split first, so five test-half questions were
+    inspected. Deleting them from the test set is the only honest repair --
+    quietly leaving them in would report a number partly measured on questions
+    whose answers were known.
+
+    Recorded in a file rather than fixed in code so the list can only grow, and
+    so anyone reading the result can see exactly what was excluded and why.
+    """
+    if not QUARANTINE.is_file():
+        return set()
+    raw = json.loads(QUARANTINE.read_text(encoding="utf-8"))
+    return {(entry["db_id"], entry["question_id"]) for entry in raw.get("ids", [])}
+
+
 def split_of(question: Question) -> str:
     """Which half a question belongs to, derived from the question itself.
 
@@ -409,6 +431,19 @@ def main(argv: list[str] | None = None) -> int:
     else:
         questions, databases = toy()
 
+    burned = quarantined()
+    if burned:
+        before = len(questions)
+        questions = [
+            q for q in questions if (q.db_id, q.question_id) not in burned
+        ]
+        dropped = before - len(questions)
+        if dropped:
+            print(
+                f"  excluding {dropped} quarantined question(s) -- their answers "
+                f"were seen while debugging; see evals/quarantine.json",
+                file=sys.stderr,
+            )
     if args.split:
         questions = [q for q in questions if split_of(q) == args.split]
     if args.difficulty:

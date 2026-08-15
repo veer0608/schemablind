@@ -1,0 +1,31 @@
+{
+  "why": "gold SQL and failure detail were inspected while debugging on 2026-08-14, so these can no longer serve as held-out questions",
+  "burned_on": "2026-08-14",
+  "ids": [
+    {
+      "question_id": 1471,
+      "db_id": "debit_card_specializing",
+      "question": "What is the ratio of customers who pay in EUR against customers who pa"
+    },
+    {
+      "question_id": 1479,
+      "db_id": "debit_card_specializing",
+      "question": "Which year recorded the most consumption of gas paid in CZK?"
+    },
+    {
+      "question_id": 1484,
+      "db_id": "debit_card_specializing",
+      "question": "How many more \"discount\" gas stations does the Czech Republic have com"
+    },
+    {
+      "question_id": 1498,
+      "db_id": "debit_card_specializing",
+      "question": "What is the highest monthly consumption in the year 2012?"
+    },
+    {
+      "question_id": 1505,
+      "db_id": "debit_card_specializing",
+      "question": "Among the customers who paid in euro, how many of them have a monthly "
+    }
+  ]
+}

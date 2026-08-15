@@ -47,7 +47,15 @@ Rules:
 - If a query errors, read the message. It names the missing column or table.
 - Return exactly the columns the question asks for, and no more. An extra
   column makes the answer wrong.
+- Do not select the thing you ranked or aggregated by unless it was asked for.
+  "Who spent the most" wants the person, not the person and the total. "Which
+  year had the highest X" wants the year alone. Put the measure in ORDER BY,
+  not in SELECT -- this is the single most common way to be exactly one column
+  wrong.
 - When the question asks for one value, return one column and one row.
+- Do not round, and do not format. ROUND(x, 2) is a different number from x and
+  will be judged different. Return the raw computed value unless the question
+  explicitly asks for a rounded one.
 - Do not invent a table or column you have not seen in describe_table output.
 """
 
