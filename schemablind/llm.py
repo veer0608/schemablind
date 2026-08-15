@@ -54,7 +54,7 @@ PROVIDERS: dict[str, Provider] = {
         "gemini",
         "https://generativelanguage.googleapis.com/v1beta/openai",
         "GEMINI_API_KEY",
-        "gemini-2.0-flash",
+        "gemini-3.5-flash",
     ),
     "together": Provider(
         "together", "https://api.together.xyz/v1", "TOGETHER_API_KEY",
@@ -80,9 +80,10 @@ PRICES: dict[str, tuple[float, float]] = {
     # openai -- openai.com/api/pricing
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
-    # gemini -- ai.google.dev/pricing
-    "gemini-2.0-flash": (0.10, 0.40),
-    "gemini-2.5-flash": (0.30, 2.50),
+    # gemini -- ai.google.dev/pricing. gemini-2.0-flash and 2.5-flash were
+    # retired; the API returns 404 for them. Current models are unpriced
+    # here on purpose until the figures are checked, so cost reports as
+    # unknown rather than as a number nobody verified.
 }
 
 
@@ -146,7 +147,12 @@ class QuotaExhausted(LLMError):
     """
 
 
-_DAILY_LIMIT = re.compile(r"per day|\bTPD\b|\bRPD\b", re.I)
+#: Every spelling of "you are out for today" seen in the wild. Groq writes
+#: "tokens per day (TPD)"; Gemini writes the quota id
+#: "GenerateRequestsPerDayPerProjectPerModel-FreeTier", with no spaces, which
+#: the space-separated pattern missed -- so a 60-question run spent every
+#: single question on four retries of a limit that was never going to lift.
+_DAILY_LIMIT = re.compile(r"per[ _-]?day|\bTPD\b|\bRPD\b", re.I)
 _DURATION = re.compile(
     r"(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m(?!s))?(?:(\d+(?:\.\d+)?)s)?(?:(\d+(?:\.\d+)?)ms)?$"
 )
@@ -282,7 +288,7 @@ class OpenAICompatibleClient:
                     self._last_headers = response.headers
                     return body
             except urllib.error.HTTPError as exc:
-                detail = exc.read().decode(errors="replace")[:400]
+                detail = exc.read().decode(errors="replace")[:1200]
                 last = f"HTTP {exc.code}: {detail}"
                 if exc.code == 429 and _DAILY_LIMIT.search(detail):
                     raise QuotaExhausted(last) from exc
