@@ -80,10 +80,26 @@ PRICES: dict[str, tuple[float, float]] = {
     # openai -- openai.com/api/pricing
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
-    # gemini -- ai.google.dev/pricing. gemini-2.0-flash and 2.5-flash were
-    # retired; the API returns 404 for them. Current models are unpriced
-    # here on purpose until the figures are checked, so cost reports as
-    # unknown rather than as a number nobody verified.
+    # gemini -- ai.google.dev/gemini-api/docs/pricing, read 2026-08-14.
+    # gemini-2.0-flash was retired and 404s, so it is gone from here rather
+    # than left as a price for a model that no longer exists.
+    #
+    # The 3.7 and 3.6 figures are promotional and DOUBLE on 2027-01-01. A cost
+    # column computed after that date with these numbers would be quietly half
+    # of the truth, which is the exact failure this table exists to avoid --
+    # check the date before trusting a comparison built on them.
+    "gemini-3.7-flash": (0.75, 3.75),
+    "gemini-3.6-flash": (0.75, 3.75),
+    "gemini-3.5-flash": (1.50, 9.00),
+    "gemini-3.5-flash-lite": (0.30, 2.50),
+    "gemini-3.1-flash-lite": (0.25, 1.50),
+}
+
+#: Prices that are promotional and have a known expiry. Kept separate so the
+#: expiry is a fact in the code rather than a comment somebody has to notice.
+PRICES_EXPIRE = {
+    "gemini-3.7-flash": "2027-01-01",
+    "gemini-3.6-flash": "2027-01-01",
 }
 
 
