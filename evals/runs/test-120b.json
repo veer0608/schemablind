@@ -1,0 +1,724 @@
+{
+  "openai/gpt-oss-120b": {
+    "abandoned": "stopped after 12 of 15: HTTP 429: {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kyw0066geyf9hjwgs1z5dpbe` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198817, Requested 2765. Please try again in 11m23.424s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing\",\"type\":\"tokens\",\"code\":\"rate_limit_exceeded\"}}\n",
+    "summary": {
+      "n": 12,
+      "execution_accuracy": 0.5,
+      "strict_accuracy": 0.5,
+      "produced_sql": 1.0,
+      "cost_per_question": 0.0021373125,
+      "total_cost": 0.025647749999999997,
+      "p50_latency_ms": 7401.820299986866,
+      "turns": 6.583333333333333,
+      "repairs": 1.25,
+      "tokens": 11816.25
+    },
+    "by_split": {
+      "dev": {},
+      "test": {
+        "n": 12,
+        "execution_accuracy": 0.5,
+        "strict_accuracy": 0.5,
+        "produced_sql": 1.0,
+        "cost_per_question": 0.0021373125,
+        "total_cost": 0.025647749999999997,
+        "p50_latency_ms": 7401.820299986866,
+        "turns": 6.583333333333333,
+        "repairs": 1.25,
+        "tokens": 11816.25
+      }
+    },
+    "failures": {
+      "wrong number of columns": 3,
+      "right shape, wrong values": 1,
+      "wrong number of rows": 1,
+      "did not run": 1
+    },
+    "results": [
+      {
+        "question_id": 1514,
+        "db_id": "debit_card_specializing",
+        "question": "What kind of currency did the customer paid at 16:25:00 in 2012/8/24?",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT DISTINCT T3.Currency FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN customers AS T3 ON T1.CustomerID = T3.CustomerID WHERE T1.Date = '2012-08-24' AND T1.Time = '16:25:00'",
+        "predicted_sql": "SELECT t.TransactionID, c.Currency FROM transactions_1k t JOIN customers c ON t.CustomerID = c.CustomerID WHERE t.Date='2012-08-24' AND t.Time='16:25:00'",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 6,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT t.TransactionID, c.Currency FROM transactions_1k t JOIN customers c ON t.CustomerID = c.CustomerID WHERE t.Date='2012-08-24' AND t.Time='16:25:00'",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'final_sql\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"final_sql\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT DISTINCT c.Currency FROM transactions_1k t JOIN customers c ON t.CustomerID = c.CustomerID WHERE t.Date='2012-08-24' AND t.Time='16:25:00'\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "transactions_1k",
+                "customers",
+                "gasstations",
+                "products",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT TransactionID, CustomerID FROM transactions_1k WHERE Date='2012-08-24' AND Time='16:25:00' LIMIT 10"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT t.TransactionID, c.Currency FROM transactions_1k t JOIN customers c ON t.CustomerID = c.CustomerID WHERE t.Date='2012-08-24' AND t.Time='16:25:00'"
+            }
+          }
+        ],
+        "prompt_tokens": 6901,
+        "completion_tokens": 527,
+        "cost_usd": 0.0013513499999999999,
+        "latency_ms": 20649.5
+      },
+      {
+        "question_id": 1524,
+        "db_id": "debit_card_specializing",
+        "question": "What's the nationality of the customer who spent 548.4 in 2012/8/24?",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T1.Date = '2012-08-24' AND T1.Price  = 548.4",
+        "predicted_sql": "SELECT 1",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 11,
+        "repairs": 3,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE t.Date='2012-08-24' AND t.Price=548.4",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "sample_rows",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 5,
+              "table": "customers"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT TransactionID, CustomerID, GasStationID, Price FROM transactions_1k WHERE Date='2012-08-24' AND Price=548.4"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT * FROM customers WHERE CustomerID=31543"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT * FROM gasstations WHERE GasStationID=3591"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE t.Date='2012-08-24' AND t.Price=548.4"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT 1"
+            }
+          }
+        ],
+        "prompt_tokens": 23702,
+        "completion_tokens": 1792,
+        "cost_usd": 0.004630499999999999,
+        "latency_ms": 12156.4
+      },
+      {
+        "question_id": 1528,
+        "db_id": "debit_card_specializing",
+        "question": "What is the percentage of \"premium\" against the overall segment in Country = \"SVK\"?",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT CAST(SUM(IIF(Country = 'SVK' AND Segment = 'Premium', 1, 0)) AS FLOAT) * 100 / SUM(IIF(Country = 'SVK', 1, 0)) FROM gasstations",
+        "predicted_sql": "SELECT 100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*) AS premium_pct FROM gasstations WHERE Country = 'SVK'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 8,
+        "repairs": 3,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT 100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*) AS premium_pct FROM gasstations WHERE Country = 'SVK'",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT 100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*) AS premium_pct FROM gasstations WHERE Country = 'SVK'"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT 100.0 * SUM(CASE WHEN Segment = 'Premium' THEN 1 ELSE 0 END) / COUNT(*) AS premium_pct FROM gasstations WHERE Country = 'SVK'"
+            }
+          }
+        ],
+        "prompt_tokens": 13294,
+        "completion_tokens": 1092,
+        "cost_usd": 0.0026493000000000003,
+        "latency_ms": 12003.6
+      },
+      {
+        "question_id": 1312,
+        "db_id": "student_club",
+        "question": "What's Angela Sanders's major?",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT T2.major_name FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T1.first_name = 'Angela' AND T1.last_name = 'Sanders'",
+        "predicted_sql": "SELECT major_name FROM member JOIN major ON member.link_to_major = major.major_id WHERE first_name = 'Angela' AND last_name = 'Sanders'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT major_name FROM member JOIN major ON member.link_to_major = major.major_id WHERE first_name = 'Angela' AND last_name = 'Sanders'",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "member",
+                "major"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT major_name FROM member JOIN major ON member.link_to_major = major.major_id WHERE first_name = 'Angela' AND last_name = 'Sanders'"
+            }
+          }
+        ],
+        "prompt_tokens": 6498,
+        "completion_tokens": 364,
+        "cost_usd": 0.0011931,
+        "latency_ms": 4370.0
+      },
+      {
+        "question_id": 1317,
+        "db_id": "student_club",
+        "question": "Among the students from the Student_Club who attended the event \"Women's Soccer\", how many of them want a T-shirt that's in medium size?",
+        "difficulty": "moderate",
+        "split": "test",
+        "gold_sql": "SELECT COUNT(T1.event_id) FROM event AS T1 INNER JOIN attendance AS T2 ON T1.event_id = T2.link_to_event INNER JOIN member AS T3 ON T2.link_to_member = T3.member_id WHERE T1.event_name = 'Women''s Soccer' AND T3.t_shirt_size = 'Medium'",
+        "predicted_sql": "SELECT COUNT(DISTINCT m.member_id) FROM attendance a JOIN member m ON a.link_to_member = m.member_id JOIN event e ON a.link_to_event = e.event_id WHERE e.event_name = 'Women''s Soccer' AND m.t_shirt_size = 'Medium'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 8,
+        "repairs": 2,
+        "nudges": 1,
+        "answered_via": "final_sql",
+        "last_query": "SELECT COUNT(DISTINCT m.member_id) FROM attendance a JOIN member m ON a.link_to_member = m.member_id JOIN event e ON a.link_to_event = e.event_id WHERE e.event_name = 'Women''s Soccer' AND m.t_shirt_size = 'Medium'",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "attendance",
+                "budget",
+                "event",
+                "expense",
+                "income",
+                "major",
+                "member",
+                "zip_code"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT event_id, event_name FROM event WHERE event_name LIKE '%Soccer%'"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(DISTINCT m.member_id) AS medium_count\nFROM attendance a\nJOIN member m ON a.link_to_member = m.member_id\nJOIN event e ON a.link_to_event = e.event_id\nWHERE e.event_name = 'Women's Soccer' AND m.t_shirt_size = 'Medium'"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(DISTINCT m.member_id) FROM attendance a JOIN member m ON a.link_to_member = m.member_id JOIN event e ON a.link_to_event = e.event_id WHERE e.event_name = 'Women's Soccer' AND m.t_shirt_size = 'Medium'"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(DISTINCT m.member_id) FROM attendance a JOIN member m ON a.link_to_member = m.member_id JOIN event e ON a.link_to_event = e.event_id WHERE e.event_name = 'Women''s Soccer' AND m.t_shirt_size = 'Medium'"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT COUNT(DISTINCT m.member_id) FROM attendance a JOIN member m ON a.link_to_member = m.member_id JOIN event e ON a.link_to_event = e.event_id WHERE e.event_name = 'Women''s Soccer' AND m.t_shirt_size = 'Medium'"
+            }
+          }
+        ],
+        "prompt_tokens": 17444,
+        "completion_tokens": 1037,
+        "cost_usd": 0.0032388,
+        "latency_ms": 9665.4
+      },
+      {
+        "question_id": 1322,
+        "db_id": "student_club",
+        "question": "Among the events attended by more than 10 members of the Student_Club, how many of them are meetings?",
+        "difficulty": "moderate",
+        "split": "test",
+        "gold_sql": "SELECT T1.event_name FROM event AS T1  INNER JOIN attendance AS T2 ON T1.event_id = T2.link_to_event GROUP BY T1.event_id  HAVING COUNT(T2.link_to_event) > 10 EXCEPT SELECT T1.event_name  FROM event AS T1  WHERE T1.type = 'Meeting'",
+        "predicted_sql": "SELECT COUNT(*) AS meeting_events_count FROM (\n  SELECT a.link_to_event\n  FROM attendance a\n  JOIN event e ON a.link_to_event = e.event_id\n  WHERE e.type = 'Meeting'\n  GROUP BY a.link_to_event\n  HAVING COUNT(*) > 10\n) sub;",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of rows",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT COUNT(*) AS meeting_events_count FROM (\n  SELECT a.link_to_event\n  FROM attendance a\n  JOIN event e ON a.link_to_event = e.event_id\n  WHERE e.type = 'Meeting'\n  GROUP BY a.link_to_event\n  HAVING COUNT(*) > 10\n) sub;",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "attendance",
+                "budget",
+                "event",
+                "expense",
+                "income",
+                "major",
+                "member",
+                "zip_code"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS meeting_events_count FROM (\n  SELECT a.link_to_event\n  FROM attendance a\n  JOIN event e ON a.link_to_event = e.event_id\n  WHERE e.type = 'Meeting'\n  GROUP BY a.link_to_event\n  HAVING COUNT(*) > 10\n) sub;"
+            }
+          }
+        ],
+        "prompt_tokens": 8887,
+        "completion_tokens": 594,
+        "cost_usd": 0.00168945,
+        "latency_ms": 5972.8
+      },
+      {
+        "question_id": 1334,
+        "db_id": "student_club",
+        "question": "List the full name of the Student_Club members that grew up in Illinois state.",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT T1.first_name, T1.last_name FROM member AS T1 INNER JOIN zip_code AS T2 ON T1.zip = T2.zip_code WHERE T2.state = 'Illinois'",
+        "predicted_sql": "SELECT 1 AS test",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 8,
+        "repairs": 3,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT first_name || ' ' || last_name AS full_name FROM member JOIN zip_code ON member.zip = zip_code.zip_code WHERE zip_code.state = 'Illinois'",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "member",
+                "zip_code"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT * FROM zip_code WHERE state = 'Illinois' LIMIT 5"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT first_name || ' ' || last_name AS full_name FROM member JOIN zip_code ON member.zip = zip_code.zip_code WHERE zip_code.state = 'Illinois'"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT 1 AS test"
+            }
+          }
+        ],
+        "prompt_tokens": 12787,
+        "completion_tokens": 1118,
+        "cost_usd": 0.00258885,
+        "latency_ms": 7915.9
+      },
+      {
+        "question_id": 1338,
+        "db_id": "student_club",
+        "question": "Was each expense in October Meeting on October 8, 2019 approved?",
+        "difficulty": "moderate",
+        "split": "test",
+        "gold_sql": "SELECT T3.approved FROM event AS T1 INNER JOIN budget AS T2 ON T1.event_id = T2.link_to_event INNER JOIN expense AS T3 ON T2.budget_id = T3.link_to_budget WHERE T1.event_name = 'October Meeting' AND T1.event_date LIKE '2019-10-08%'",
+        "predicted_sql": "SELECT e.expense_id, e.approved, b.budget_id, ev.event_name, ev.event_date\nFROM expense e\nJOIN budget b ON e.link_to_budget = b.budget_id\nJOIN event ev ON b.link_to_event = ev.event_id\nWHERE ev.event_name = 'October Meeting'\n  AND ev.event_date LIKE '2019-10-08%';",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 6,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT e.expense_id, e.approved, b.budget_id, ev.event_name, ev.event_date\nFROM expense e\nJOIN budget b ON e.link_to_budget = b.budget_id\nJOIN event ev ON b.link_to_event = ev.event_id\nWHERE ev.event_name = 'October Meeting'\n  AND ev.event_date LIKE '2019-10-08%';",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'final_sql\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"final_sql\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT e.expense_id, e.approved\\\\nFROM expense e\\\\nJOIN budget b ON e.link_to_budget = b.budget_id\\\\nJOIN event ev ON b.link_to_event = ev.event_id\\\\nWHERE ev.event_name = 'October Meeting'\\\\n  AND ev.event_date LIKE '2019-10-08%';\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "event",
+                "expense"
+              ]
+            }
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "budget"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT e.expense_id, e.approved, b.budget_id, ev.event_name, ev.event_date\nFROM expense e\nJOIN budget b ON e.link_to_budget = b.budget_id\nJOIN event ev ON b.link_to_event = ev.event_id\nWHERE ev.event_name = 'October Meeting'\n  AND ev.event_date LIKE '2019-10-08%';"
+            }
+          }
+        ],
+        "prompt_tokens": 7567,
+        "completion_tokens": 767,
+        "cost_usd": 0.0015952499999999997,
+        "latency_ms": 5124.4
+      },
+      {
+        "question_id": 1339,
+        "db_id": "student_club",
+        "question": "Calculate the total average cost that Elijah Allen spent in the events on September and October.",
+        "difficulty": "challenging",
+        "split": "test",
+        "gold_sql": "SELECT AVG(T2.cost) FROM member AS T1 INNER JOIN expense AS T2 ON T1.member_id = T2.link_to_member WHERE T1.last_name = 'Allen' AND T1.first_name = 'Elijah' AND (SUBSTR(T2.expense_date, 6, 2) = '09' OR SUBSTR(T2.expense_date, 6, 2) = '10')",
+        "predicted_sql": "SELECT AVG(e.cost) AS avg_cost FROM expense e JOIN member m ON e.link_to_member = m.member_id WHERE m.first_name = 'Elijah' AND m.last_name = 'Allen' AND (strftime('%m', e.expense_date) = '09' OR strftime('%m', e.expense_date) = '10');",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT AVG(e.cost) AS avg_cost FROM expense e JOIN member m ON e.link_to_member = m.member_id WHERE m.first_name = 'Elijah' AND m.last_name = 'Allen' AND (strftime('%m', e.expense_date) = '09' OR strftime('%m', e.expense_date) = '10');",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "expense",
+                "member"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT AVG(e.cost) AS avg_cost FROM expense e JOIN member m ON e.link_to_member = m.member_id WHERE m.first_name = 'Elijah' AND m.last_name = 'Allen' AND (strftime('%m', e.expense_date) = '09' OR strftime('%m', e.expense_date) = '10');"
+            }
+          }
+        ],
+        "prompt_tokens": 7817,
+        "completion_tokens": 753,
+        "cost_usd": 0.00162435,
+        "latency_ms": 6887.8
+      },
+      {
+        "question_id": 1346,
+        "db_id": "student_club",
+        "question": "Tell the phone number of \"Carlo Jacobs\".",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT phone FROM member WHERE first_name = 'Carlo' AND last_name = 'Jacobs'",
+        "predicted_sql": "SELECT phone FROM member WHERE first_name = 'Carlo' AND last_name = 'Jacobs';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT phone FROM member WHERE first_name = 'Carlo' AND last_name = 'Jacobs';",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "member",
+                "attendance",
+                "budget",
+                "event",
+                "expense",
+                "income",
+                "major",
+                "zip_code"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT phone FROM member WHERE first_name = 'Carlo' AND last_name = 'Jacobs';"
+            }
+          }
+        ],
+        "prompt_tokens": 8327,
+        "completion_tokens": 291,
+        "cost_usd": 0.0014236499999999998,
+        "latency_ms": 5197.4
+      },
+      {
+        "question_id": 1351,
+        "db_id": "student_club",
+        "question": "What was Brent Thomason's major?",
+        "difficulty": "simple",
+        "split": "test",
+        "gold_sql": "SELECT T2.major_name FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T1.first_name = 'Brent' AND T1.last_name = 'Thomason'",
+        "predicted_sql": "SELECT m.major_name FROM member mem JOIN major m ON mem.link_to_major = m.major_id WHERE mem.first_name = 'Brent' AND mem.last_name = 'Thomason'\"}",
+        "correct": false,
+        "exact": false,
+        "failure": "did not run",
+        "turns": 8,
+        "repairs": 4,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT m.major_name FROM member AS mem JOIN major AS m ON mem.link_to_major = m.major_id WHERE mem.first_name = 'Brent' AND mem.last_name = 'Thomason';",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "member",
+                "major"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT member_id, first_name, last_name, link_to_major FROM member WHERE first_name = 'Brent' AND last_name = 'Thomason';"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT m.major_name FROM member AS mem JOIN major AS m ON mem.link_to_major = m.major_id WHERE mem.first_name = 'Brent' AND mem.last_name = 'Thomason';"
+            }
+          }
+        ],
+        "prompt_tokens": 12505,
+        "completion_tokens": 873,
+        "cost_usd": 0.0023995500000000003,
+        "latency_ms": 12421.4
+      },
+      {
+        "question_id": 1352,
+        "db_id": "student_club",
+        "question": "For all the club members from \"Business\" major, how many of them wear medium size t-shirt?",
+        "difficulty": "moderate",
+        "split": "test",
+        "gold_sql": "SELECT COUNT(T1.member_id) FROM member AS T1 INNER JOIN major AS T2 ON T1.link_to_major = T2.major_id WHERE T2.major_name = 'Business' AND T1.t_shirt_size = 'Medium'",
+        "predicted_sql": "SELECT COUNT(*) AS count FROM member m JOIN major mj ON m.link_to_major = mj.major_id WHERE mj.major_name = 'Business' AND m.t_shirt_size = 'Medium';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 4,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT COUNT(*) AS cnt FROM member m JOIN major mj ON m.link_to_major = mj.major_id WHERE mj.major_name = 'Business' AND m.t_shirt_size = 'Medium';",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "attendance",
+                "budget",
+                "event",
+                "expense",
+                "income",
+                "major",
+                "member",
+                "zip_code"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS cnt FROM member m JOIN major mj ON m.link_to_major = mj.major_id WHERE mj.major_name = 'Business' AND m.t_shirt_size = 'Medium';"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT COUNT(*) AS count FROM member m JOIN major mj ON m.link_to_major = mj.major_id WHERE mj.major_name = 'Business' AND m.t_shirt_size = 'Medium';"
+            }
+          }
+        ],
+        "prompt_tokens": 6336,
+        "completion_tokens": 522,
+        "cost_usd": 0.0012636,
+        "latency_ms": 4293.9
+      }
+    ]
+  }
+}

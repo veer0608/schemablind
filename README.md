@@ -138,13 +138,58 @@ python -m evals.runner --bird --solvers oracle
 
 <!-- /SCORECARD -->
 
-**No model numbers yet, deliberately.** Those two rows are not competitors —
-they are the harness proving itself. The oracle submits the reference query and
-must score 100%; the mute agent submits nothing and must score 0%. If either
-ever drifts, the scorer is broken and no model number produced by it is worth
-reading. CI runs exactly that check, and it needs no key.
+Those two rows are not competitors — they are the harness proving itself. The
+oracle submits the reference query and must score 100%; the mute agent submits
+nothing and must score 0%. If either ever drifts, the scorer is broken and no
+model number produced by it is worth reading. CI runs exactly that check, and
+it needs no key. The oracle also scores 100% on all 500 real Mini-Dev
+questions, so the scorer holds against real data and not only a fixture built
+to suit it.
 
-The model rows arrive when the budget question below is settled.
+### Where the agent actually stands
+
+**There is no complete model run yet, so there is no model row.** A run that
+hits the daily token cap is abandoned rather than scored — the questions it
+never reached would count as answers it got wrong. Free-tier budget has ended
+three runs that way so far.
+
+What there is, on `openai/gpt-oss-120b`, is indicative and small:
+
+| | n | execution accuracy |
+|---|---|---|
+| dev half | 14 | 43% |
+| **held-out half** | **12** | **50%** |
+
+At n=12 the interval around 50% runs roughly from a quarter to three quarters,
+so this is a direction rather than a measurement. What it does show is that the
+prompt rules **generalised**: they were written from dev failures and scored no
+worse on questions they had never seen. The same discipline on a sister project
+caught the opposite result, which is the point of running it.
+
+Getting from here to a real number is 215 more held-out questions — a few days
+of free tier, or about a dollar.
+
+#### What changed it
+
+Starting point was 16%. Three things moved it, and only one was the model's
+fault:
+
+- **An API failure discarded queries the agent had already verified.** Six of
+  nineteen questions were scored "produced no query" when a good query was
+  sitting in the transcript and the client had fallen over on a later turn.
+  That was written up as a finding about the agent before it was recognised as
+  a bug — a failure of the client reported as a failure of reasoning.
+- **Selecting the column it ranked by.** "Who spent the most" was answered with
+  the person *and* the total, which is exactly one column wrong. A prompt rule
+  putting the measure in `ORDER BY` rather than `SELECT` fixed several.
+- **Rounding.** `ROUND(x, 2)` is a different number from `x` and is judged
+  different.
+
+Turns fell from 9.0 to 5.6 and tokens from 13,024 to 8,576 over the same
+questions, from batching `describe_table` into one call that also carries
+sample values. That is a third less budget per question, and on a
+request-metered provider it is the difference between three questions a day and
+five.
 
 ## What this will cost, before it is spent
 
