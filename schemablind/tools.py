@@ -57,14 +57,40 @@ class Tools:
             return "this database has no tables"
         return "tables: " + ", ".join(names)
 
-    def describe_table(self, table: str) -> str:
-        """Columns, types, keys and foreign keys, in one line per table."""
+    def describe_table(self, table: str | list[str], samples: int = 2) -> str:
+        """Columns, keys, foreign keys and a couple of real rows, per table.
+
+        Takes several tables at once, and carries sample values inline, because
+        on a metered API the expensive unit is the turn rather than the token:
+        every turn resends the whole tool schema and the whole conversation. An
+        agent that asked for four tables one at a time and then sampled two of
+        them spent six turns finding out what one turn can say.
+
+        The samples are here for the same reason `sample_rows` exists -- an
+        encoding guessed wrong ('Y'/'N' against 0/1) produces a query that runs
+        cleanly and answers the wrong question -- but now it does not cost a
+        separate round trip to find out.
+        """
         known = self._table_names()
-        if table not in known:
-            return self._no_such_table(table, known)
-        columns = self._columns(table)
-        rendered = ", ".join(column.rendered() for column in columns)
-        return f"{table}({rendered})"
+        wanted = [table] if isinstance(table, str) else list(table)
+        blocks = []
+        for name in wanted:
+            name = str(name)
+            if name not in known:
+                blocks.append(self._no_such_table(name, known))
+                continue
+            columns = self._columns(name)
+            rendered = ", ".join(column.rendered() for column in columns)
+            block = f"{name}({rendered})"
+            if samples > 0:
+                rows = self.sandbox.introspect(
+                    f'SELECT * FROM "{name.replace(chr(34), chr(34) * 2)}" LIMIT {min(samples, 5)}'
+                )
+                for row in rows:
+                    values = " | ".join("NULL" if v is None else str(v)[:40] for v in row)
+                    block += f"\n  e.g. {values}"
+            blocks.append(block)
+        return "\n".join(blocks)
 
     def sample_rows(self, table: str, limit: int | None = None) -> str:
         known = self._table_names()
@@ -98,7 +124,8 @@ class Tools:
             if name == "list_tables":
                 return self.list_tables()
             if name == "describe_table":
-                return self.describe_table(str(arguments["table"]))
+                wanted = arguments.get("tables") or arguments["table"]
+                return self.describe_table(wanted)
             if name == "sample_rows":
                 limit = arguments.get("limit")
                 return self.sample_rows(
@@ -189,13 +216,23 @@ SCHEMA: list[dict] = [
     {
         "name": "describe_table",
         "description": (
-            "Columns, types, primary keys and foreign keys for one table. "
-            "Foreign keys are shown as '-> other_table.column' and are how you find join paths."
+            "Columns, types, primary keys, foreign keys and a couple of real rows, "
+            "for one table or several at once. Foreign keys are shown as "
+            "'-> other_table.column' and are how you find join paths. "
+            "Ask for every table you might need in ONE call -- there is no saving "
+            "in asking one at a time, and the sample rows show you how values are "
+            "actually encoded."
         ),
         "parameters": {
             "type": "object",
-            "properties": {"table": {"type": "string", "description": "Exact table name"}},
-            "required": ["table"],
+            "properties": {
+                "tables": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Exact table names. Pass them all together.",
+                },
+                "table": {"type": "string", "description": "One exact table name"},
+            },
         },
     },
     {

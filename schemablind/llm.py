@@ -54,7 +54,7 @@ PROVIDERS: dict[str, Provider] = {
         "gemini",
         "https://generativelanguage.googleapis.com/v1beta/openai",
         "GEMINI_API_KEY",
-        "gemini-3.5-flash",
+        "gemini-3.7-flash",
     ),
     "together": Provider(
         "together", "https://api.together.xyz/v1", "TOGETHER_API_KEY",

@@ -51,6 +51,33 @@ class TestDescribing:
     def test_a_case_mismatch_is_pointed_at_the_real_name(self, tools):
         assert "Did you mean 'students'?" in tools.describe_table("Students")
 
+    def test_several_tables_come_back_from_one_call(self, tools):
+        # On a metered API the turn is the expensive unit, not the token: every
+        # turn resends the whole tool schema and the whole conversation. Four
+        # tables asked for one at a time is four turns for nothing.
+        described = tools.describe_table(["schools", "students", "scores"])
+
+        assert "schools(" in described
+        assert "students(" in described
+        assert "scores(" in described
+
+    def test_it_carries_real_values_so_encodings_are_visible(self, tools):
+        # charter is 0/1, not 'Y'/'N'. Guessing that wrong writes a query that
+        # runs cleanly and answers a different question.
+        described = tools.describe_table("schools")
+
+        assert "e.g." in described
+        assert "Bayside High" in described
+
+    def test_one_bad_name_does_not_lose_the_good_ones(self, tools):
+        described = tools.describe_table(["schools", "teachers"])
+
+        assert "schools(" in described
+        assert "no table called 'teachers'" in described
+
+    def test_samples_can_be_turned_off(self, tools):
+        assert "e.g." not in tools.describe_table("schools", samples=0)
+
 
 class TestSampling:
     def test_it_returns_a_few_real_rows(self, tools):
