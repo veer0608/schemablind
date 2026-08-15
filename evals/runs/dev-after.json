@@ -1,0 +1,841 @@
+{
+  "openai/gpt-oss-120b": {
+    "abandoned": "",
+    "summary": {
+      "n": 15,
+      "execution_accuracy": 0.4666666666666667,
+      "strict_accuracy": 0.4666666666666667,
+      "produced_sql": 1.0,
+      "cost_per_question": 0.00160407,
+      "total_cost": 0.02406105,
+      "p50_latency_ms": 4701.656500023091,
+      "turns": 5.533333333333333,
+      "repairs": 0.2,
+      "tokens": 8360.2
+    },
+    "by_split": {
+      "dev": {
+        "n": 15,
+        "execution_accuracy": 0.4666666666666667,
+        "strict_accuracy": 0.4666666666666667,
+        "produced_sql": 1.0,
+        "cost_per_question": 0.00160407,
+        "total_cost": 0.02406105,
+        "p50_latency_ms": 4701.656500023091,
+        "turns": 5.533333333333333,
+        "repairs": 0.2,
+        "tokens": 8360.2
+      },
+      "test": {}
+    },
+    "failures": {
+      "right shape, wrong values": 4,
+      "wrong number of columns": 3,
+      "wrong number of rows": 1
+    },
+    "results": [
+      {
+        "question_id": 1472,
+        "db_id": "debit_card_specializing",
+        "question": "In 2012, who had the least consumption in LAM?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM' AND SUBSTR(T2.Date, 1, 4) = '2012' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+        "predicted_sql": "SELECT ym.CustomerID FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'LAM' AND ym.Date BETWEEN '201201' AND '201212' GROUP BY ym.CustomerID ORDER BY SUM(ym.Consumption) ASC LIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 4,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT ym.CustomerID, SUM(ym.Consumption) AS total_consumption FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'LAM' AND ym.Date BETWEEN '201201' AND '201212' GROUP BY ym.CustomerID ORDER BY total_consumption ASC LIMIT 5",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT ym.CustomerID, SUM(ym.Consumption) AS total_consumption FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'LAM' AND ym.Date BETWEEN '201201' AND '201212' GROUP BY ym.CustomerID ORDER BY total_consumption ASC LIMIT 5"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "SELECT ym.CustomerID FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'LAM' AND ym.Date BETWEEN '201201' AND '201212' GROUP BY ym.CustomerID ORDER BY SUM(ym.Consumption) ASC LIMIT 1"
+            }
+          }
+        ],
+        "prompt_tokens": 5391,
+        "completion_tokens": 673,
+        "cost_usd": 0.00121245,
+        "latency_ms": 4701.7
+      },
+      {
+        "question_id": 1473,
+        "db_id": "debit_card_specializing",
+        "question": "What was the average monthly consumption of customers in SME for the year 2013?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT AVG(T2.Consumption) / 12 FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME'",
+        "predicted_sql": "SELECT AVG(Consumption)/12 AS avg_monthly_consumption FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT AVG(Consumption)/12 AS avg_monthly_consumption FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT AVG(Consumption)/12 AS avg_monthly_consumption FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'"
+            }
+          }
+        ],
+        "prompt_tokens": 7317,
+        "completion_tokens": 633,
+        "cost_usd": 0.0014773499999999999,
+        "latency_ms": 4438.3
+      },
+      {
+        "question_id": 1476,
+        "db_id": "debit_card_specializing",
+        "question": "What was the difference in gas consumption between CZK-paying customers and EUR-paying customers in 2012?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT SUM(IIF(T1.Currency = 'CZK', T2.Consumption, 0)) - SUM(IIF(T1.Currency = 'EUR', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2012'",
+        "predicted_sql": "SELECT (SUM(CASE WHEN c.Currency='CZK' THEN ym.Consumption ELSE 0 END) - SUM(CASE WHEN c.Currency='EUR' THEN ym.Consumption ELSE 0 END)) AS difference FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE ym.Date BETWEEN '201201' AND '201212'",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT (SUM(CASE WHEN c.Currency='CZK' THEN ym.Consumption ELSE 0 END) - SUM(CASE WHEN c.Currency='EUR' THEN ym.Consumption ELSE 0 END)) AS difference FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE ym.Date BETWEEN '201201' AND '201212'",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool choice is required, but model did not call a tool\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT (SUM(CASE WHEN c.Currency='CZK' THEN ym.Consumption ELSE 0 END) - SUM(CASE WHEN c.Currency='EUR' THEN ym.Consumption ELSE 0 END)) AS difference FROM yearmonth ym JOIN customers c ON ym.CustomerID = c.CustomerID WHERE ym.Date BETWEEN '201201' AND '201212'"
+            }
+          }
+        ],
+        "prompt_tokens": 5403,
+        "completion_tokens": 587,
+        "cost_usd": 0.0011626499999999999,
+        "latency_ms": 3288.7
+      },
+      {
+        "question_id": 1480,
+        "db_id": "debit_card_specializing",
+        "question": "What was the gas consumption peak month for SME customers in 2013?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT SUBSTR(T2.Date, 5, 2) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE SUBSTR(T2.Date, 1, 4) = '2013' AND T1.Segment = 'SME' GROUP BY SUBSTR(T2.Date, 5, 2) ORDER BY SUM(T2.Consumption) DESC LIMIT 1",
+        "predicted_sql": "SELECT ym.Date, SUM(ym.Consumption) AS total_consumption\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'\nGROUP BY ym.Date\nORDER BY total_consumption DESC\nLIMIT 1",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT ym.Date, SUM(ym.Consumption) AS total_consumption\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'\nGROUP BY ym.Date\nORDER BY total_consumption DESC\nLIMIT 1",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'final_sql\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"final_sql\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT ym.Date\\\\nFROM yearmonth ym\\\\nJOIN customers c ON ym.CustomerID = c.CustomerID\\\\nWHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'\\\\nGROUP BY ym.Date\\\\nORDER BY SUM(ym.Consumption) DESC\\\\nLIMIT 1\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT ym.Date, SUM(ym.Consumption) AS total_consumption\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'SME' AND ym.Date BETWEEN '201301' AND '201312'\nGROUP BY ym.Date\nORDER BY total_consumption DESC\nLIMIT 1"
+            }
+          }
+        ],
+        "prompt_tokens": 5267,
+        "completion_tokens": 485,
+        "cost_usd": 0.00108105,
+        "latency_ms": 3729.8
+      },
+      {
+        "question_id": 1481,
+        "db_id": "debit_card_specializing",
+        "question": "What is the difference in the annual average consumption of the customers with the least amount of consumption paid in CZK for 2013 between SME and LAM, LAM and KAM, and KAM and SME?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'LAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) , CAST(SUM(IIF(T1.Segment = 'KAM', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) - CAST(SUM(IIF(T1.Segment = 'SME', T2.Consumption, 0)) AS REAL) / COUNT(T1.CustomerID) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Currency = 'CZK' AND T2.Consumption = ( SELECT MIN(Consumption) FROM yearmonth ) AND T2.Date BETWEEN 201301 AND 201312",
+        "predicted_sql": "WITH cust AS (\n  SELECT CustomerID, Segment FROM customers WHERE Currency='CZK'\n),\ncons AS (\n  SELECT CustomerID, SUM(Consumption) AS total_cons\n  FROM yearmonth\n  WHERE Date BETWEEN '201301' AND '201312'\n  GROUP BY CustomerID\n),\nseg_tot AS (\n  SELECT c.Segment,\n         MIN(co.total_cons) AS min_cons\n  FROM cust c\n  JOIN cons co USING (CustomerID)\n  GROUP BY c.Segment\n)\nSELECT\n  (SELECT min_cons FROM seg_tot WHERE Segment='SME') - (SELECT min_cons FROM seg_tot WHERE Segment='LAM') AS SME_LAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='LAM') - (SELECT min_cons FROM seg_tot WHERE Segment='KAM') AS LAM_KAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='KAM') - (SELECT min_cons FROM seg_tot WHERE Segment='SME') AS KAM_SME_Diff;",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 4,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "WITH cust AS (\n  SELECT CustomerID, Segment FROM customers WHERE Currency='CZK'\n),\ncons AS (\n  SELECT CustomerID, SUM(Consumption) AS total_cons\n  FROM yearmonth\n  WHERE Date BETWEEN '201301' AND '201312'\n  GROUP BY CustomerID\n),\nseg_tot AS (\n  SELECT c.Segment,\n         MIN(co.total_cons) AS min_cons\n  FROM cust c\n  JOIN cons co USING (CustomerID)\n  GROUP BY c.Segment\n)\nSELECT\n  (SELECT min_cons FROM seg_tot WHERE Segment='SME') - (SELECT min_cons FROM seg_tot WHERE Segment='LAM') AS SME_LAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='LAM') - (SELECT min_cons FROM seg_tot WHERE Segment='KAM') AS LAM_KAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='KAM') - (SELECT min_cons FROM seg_tot WHERE Segment='SME') AS KAM_SME_Diff;",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "WITH cust AS (\n  SELECT CustomerID, Segment FROM customers WHERE Currency='CZK'\n),\ncons AS (\n  SELECT CustomerID, SUM(Consumption) AS total_cons\n  FROM yearmonth\n  WHERE Date BETWEEN '201301' AND '201312'\n  GROUP BY CustomerID\n),\nseg_tot AS (\n  SELECT c.Segment,\n         MIN(co.total_cons) AS min_cons\n  FROM cust c\n  JOIN cons co USING (CustomerID)\n  GROUP BY c.Segment\n)\nSELECT\n  (SELECT min_cons FROM seg_tot WHERE Segment='SME') - (SELECT min_cons FROM seg_tot WHERE Segment='LAM') AS SME_LAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='LAM') - (SELECT min_cons FROM seg_tot WHERE Segment='KAM') AS LAM_KAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='KAM') - (SELECT min_cons FROM seg_tot WHERE Segment='SME') AS KAM_SME_Diff;"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "WITH cust AS (\n  SELECT CustomerID, Segment FROM customers WHERE Currency='CZK'\n),\ncons AS (\n  SELECT CustomerID, SUM(Consumption) AS total_cons\n  FROM yearmonth\n  WHERE Date BETWEEN '201301' AND '201312'\n  GROUP BY CustomerID\n),\nseg_tot AS (\n  SELECT c.Segment,\n         MIN(co.total_cons) AS min_cons\n  FROM cust c\n  JOIN cons co USING (CustomerID)\n  GROUP BY c.Segment\n)\nSELECT\n  (SELECT min_cons FROM seg_tot WHERE Segment='SME') - (SELECT min_cons FROM seg_tot WHERE Segment='LAM') AS SME_LAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='LAM') - (SELECT min_cons FROM seg_tot WHERE Segment='KAM') AS LAM_KAM_Diff,\n  (SELECT min_cons FROM seg_tot WHERE Segment='KAM') - (SELECT min_cons FROM seg_tot WHERE Segment='SME') AS KAM_SME_Diff;"
+            }
+          }
+        ],
+        "prompt_tokens": 6338,
+        "completion_tokens": 1485,
+        "cost_usd": 0.0018417,
+        "latency_ms": 8124.1
+      },
+      {
+        "question_id": 1482,
+        "db_id": "debit_card_specializing",
+        "question": "Which of the three segments\u2014SME, LAM and KAM\u2014has the biggest and lowest percentage increases in consumption paid in EUR between 2012 and 2013?",
+        "difficulty": "challenging",
+        "split": "dev",
+        "gold_sql": "SELECT CAST((SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0))) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'SME' AND T2.Date LIKE '2012%', T2.Consumption, 0)), CAST(SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'LAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) , CAST(SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2013%', T2.Consumption, 0)) - SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) AS FLOAT) * 100 / SUM(IIF(T1.Segment = 'KAM' AND T2.Date LIKE '2012%', T2.Consumption, 0)) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID",
+        "predicted_sql": "WITH seg_year AS (\n  SELECT c.Segment, substr(y.Date,1,4) AS yr, SUM(y.Consumption) AS total\n  FROM yearmonth y\n  JOIN customers c ON y.CustomerID = c.CustomerID\n  WHERE substr(y.Date,1,4) IN ('2012','2013')\n  GROUP BY c.Segment, yr\n), pct AS (\n  SELECT s.Segment,\n         ((MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) / MAX(CASE WHEN yr='2013' THEN total END)) * 100.0 AS pct_increase\n  FROM seg_year s\n  GROUP BY s.Segment\n)\nSELECT Segment, pct_increase\nFROM pct\nWHERE pct_increase = (SELECT MAX(pct_increase) FROM pct)\n   OR pct_increase = (SELECT MIN(pct_increase) FROM pct);",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "WITH seg_year AS (\n  SELECT c.Segment, substr(y.Date,1,4) AS yr, SUM(y.Consumption) AS total\n  FROM yearmonth y\n  JOIN customers c ON y.CustomerID = c.CustomerID\n  WHERE substr(y.Date,1,4) IN ('2012','2013')\n  GROUP BY c.Segment, yr\n)\nSELECT s.Segment,\n       (MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) AS increase,\n       ( (MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) / MAX(CASE WHEN yr='2013' THEN total END) ) * 100.0 AS pct_increase\nFROM seg_year s\nGROUP BY s.Segment;",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT c.Segment, substr(y.Date,1,4) AS yr, SUM(y.Consumption) AS total_consumption\nFROM yearmonth y\nJOIN customers c ON y.CustomerID = c.CustomerID\nWHERE substr(y.Date,1,4) IN ('2012','2013')\nGROUP BY c.Segment, yr\nORDER BY c.Segment, yr;"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "WITH seg_year AS (\n  SELECT c.Segment, substr(y.Date,1,4) AS yr, SUM(y.Consumption) AS total\n  FROM yearmonth y\n  JOIN customers c ON y.CustomerID = c.CustomerID\n  WHERE substr(y.Date,1,4) IN ('2012','2013')\n  GROUP BY c.Segment, yr\n)\nSELECT s.Segment,\n       (MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) AS increase,\n       ( (MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) / MAX(CASE WHEN yr='2013' THEN total END) ) * 100.0 AS pct_increase\nFROM seg_year s\nGROUP BY s.Segment;"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "WITH seg_year AS (\n  SELECT c.Segment, substr(y.Date,1,4) AS yr, SUM(y.Consumption) AS total\n  FROM yearmonth y\n  JOIN customers c ON y.CustomerID = c.CustomerID\n  WHERE substr(y.Date,1,4) IN ('2012','2013')\n  GROUP BY c.Segment, yr\n), pct AS (\n  SELECT s.Segment,\n         ((MAX(CASE WHEN yr='2013' THEN total END) - MAX(CASE WHEN yr='2012' THEN total END)) / MAX(CASE WHEN yr='2013' THEN total END)) * 100.0 AS pct_increase\n  FROM seg_year s\n  GROUP BY s.Segment\n)\nSELECT Segment, pct_increase\nFROM pct\nWHERE pct_increase = (SELECT MAX(pct_increase) FROM pct)\n   OR pct_increase = (SELECT MIN(pct_increase) FROM pct);"
+            }
+          }
+        ],
+        "prompt_tokens": 8837,
+        "completion_tokens": 1478,
+        "cost_usd": 0.00221235,
+        "latency_ms": 6614.2
+      },
+      {
+        "question_id": 1483,
+        "db_id": "debit_card_specializing",
+        "question": "How much did customer 6 consume in total between August and November 2013?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT SUM(Consumption) FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'",
+        "predicted_sql": "SELECT SUM(Consumption) FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 8,
+        "repairs": 3,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT SUM(Consumption) AS total_consumption FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT CustomerID, Date, Consumption FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT SUM(Consumption) AS total_consumption FROM yearmonth WHERE CustomerID = 6 AND Date BETWEEN '201308' AND '201311'"
+            }
+          }
+        ],
+        "prompt_tokens": 13457,
+        "completion_tokens": 997,
+        "cost_usd": 0.00261675,
+        "latency_ms": 10960.5
+      },
+      {
+        "question_id": 1486,
+        "db_id": "debit_card_specializing",
+        "question": "Is it true that more SMEs pay in Czech koruna than in euros? If so, how many more?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT SUM(Currency = 'CZK') - SUM(Currency = 'EUR') FROM customers WHERE Segment = 'SME'",
+        "predicted_sql": "SELECT (SUM(CASE WHEN Currency='CZK' THEN 1 ELSE 0 END) - SUM(CASE WHEN Currency='EUR' THEN 1 ELSE 0 END)) AS diff FROM customers WHERE Segment='SME';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT (SUM(CASE WHEN Currency='CZK' THEN 1 ELSE 0 END) - SUM(CASE WHEN Currency='EUR' THEN 1 ELSE 0 END)) AS diff FROM customers WHERE Segment='SME';",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'assistant\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"assistant\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT (SUM(CASE WHEN Currency='CZK' THEN 1 ELSE 0 END) - SUM(CASE WHEN Currency='EUR' THEN 1 ELSE 0 END)) AS diff FROM customers WHERE Segment='SME';\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT (SUM(CASE WHEN Currency='CZK' THEN 1 ELSE 0 END) - SUM(CASE WHEN Currency='EUR' THEN 1 ELSE 0 END)) AS diff FROM customers WHERE Segment='SME';"
+            }
+          }
+        ],
+        "prompt_tokens": 5312,
+        "completion_tokens": 634,
+        "cost_usd": 0.0011771999999999998,
+        "latency_ms": 6651.3
+      },
+      {
+        "question_id": 1490,
+        "db_id": "debit_card_specializing",
+        "question": "How many percent of LAM customer consumed more than 46.73?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT CAST(SUM(IIF(T2.Consumption > 46.73, 1, 0)) AS FLOAT) * 100 / COUNT(T1.CustomerID) FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM'",
+        "predicted_sql": "SELECT (COUNT(DISTINCT ym.CustomerID) * 100.0) / (SELECT COUNT(*) FROM customers WHERE Segment='LAM') AS percent\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment='LAM' AND ym.Consumption > 46.73;",
+        "correct": false,
+        "exact": false,
+        "failure": "right shape, wrong values",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT (COUNT(DISTINCT ym.CustomerID) * 100.0) / (SELECT COUNT(*) FROM customers WHERE Segment='LAM') AS percent\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment='LAM' AND ym.Consumption > 46.73;",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool choice is required, but model did not call a tool\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT (COUNT(DISTINCT ym.CustomerID) * 100.0) / (SELECT COUNT(*) FROM customers WHERE Segment='LAM') AS percent\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment='LAM' AND ym.Consumption > 46.73;"
+            }
+          }
+        ],
+        "prompt_tokens": 5460,
+        "completion_tokens": 683,
+        "cost_usd": 0.0012288,
+        "latency_ms": 4076.3
+      },
+      {
+        "question_id": 1493,
+        "db_id": "debit_card_specializing",
+        "question": "In February 2012, what percentage of customers consumed more than 528.3?",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT CAST(SUM(IIF(Consumption > 528.3, 1, 0)) AS FLOAT) * 100 / COUNT(CustomerID) FROM yearmonth WHERE Date = '201202'",
+        "predicted_sql": "SELECT 100.0 * SUM(CASE WHEN Consumption > 528.3 THEN 1 ELSE 0 END) / COUNT(*) AS percentage FROM yearmonth WHERE Date = '201202';",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT 100.0 * SUM(CASE WHEN Consumption > 528.3 THEN 1 ELSE 0 END) / COUNT(*) AS percentage FROM yearmonth WHERE Date = '201202';",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'assistant\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"assistant\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT 100.0 * SUM(CASE WHEN Consumption \\u003e 528.3 THEN 1 ELSE 0 END) / COUNT(*) AS percentage FROM yearmonth WHERE Date = '201202';\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT 100.0 * SUM(CASE WHEN Consumption > 528.3 THEN 1 ELSE 0 END) / COUNT(*) AS percentage FROM yearmonth WHERE Date = '201202';"
+            }
+          }
+        ],
+        "prompt_tokens": 5159,
+        "completion_tokens": 491,
+        "cost_usd": 0.0010684499999999999,
+        "latency_ms": 3773.1
+      },
+      {
+        "question_id": 1500,
+        "db_id": "debit_card_specializing",
+        "question": "Please list the product description of the products consumed in September, 2013.",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT T3.Description FROM transactions_1k AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID INNER JOIN products AS T3 ON T1.ProductID = T3.ProductID WHERE T2.Date = '201309'",
+        "predicted_sql": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN yearmonth y ON t.CustomerID = y.CustomerID AND substr(t.Date,1,7) = substr(y.Date,1,4)||'-'||substr(y.Date,5,2) JOIN products p ON t.ProductID = p.ProductID WHERE y.Date = '201309'",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of rows",
+        "turns": 7,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN yearmonth y ON t.CustomerID = y.CustomerID AND substr(t.Date,1,7) = substr(y.Date,1,4)||'-'||substr(y.Date,5,2) JOIN products p ON t.ProductID = p.ProductID WHERE y.Date = '201309'",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "sample_rows",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN products p ON t.ProductID = p.ProductID WHERE substr(t.Date,1,7) = '2013-09'"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 5,
+              "table": "transactions_1k"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN yearmonth y ON t.CustomerID = y.CustomerID AND substr(t.Date,1,7) = substr(y.Date,1,4)||'-'||substr(y.Date,5,2) JOIN products p ON t.ProductID = p.ProductID WHERE y.Date = '201309'"
+            }
+          }
+        ],
+        "prompt_tokens": 12745,
+        "completion_tokens": 1120,
+        "cost_usd": 0.0025837499999999997,
+        "latency_ms": 8530.0
+      },
+      {
+        "question_id": 1501,
+        "db_id": "debit_card_specializing",
+        "question": "Please list the countries of the gas stations with transactions taken place in June, 2013.",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT T2.Country FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN yearmonth AS T3 ON T1.CustomerID = T3.CustomerID WHERE T3.Date = '201306'",
+        "predicted_sql": "SELECT Date, length(Date) as len FROM transactions_1k LIMIT 10;",
+        "correct": false,
+        "exact": false,
+        "failure": "wrong number of columns",
+        "turns": 10,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT Date, length(Date) as len FROM transactions_1k LIMIT 10;",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'assistant\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"assistant\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT DISTINCT g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE substr(t.Date,1,7) = '2013-06' ORDER BY g.Country;\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "sample_rows",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "gasstations",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT g.Country FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE substr(t.Date,1,7) = '2013-06' ORDER BY g.Country;"
+            }
+          },
+          {
+            "sample_rows": {
+              "limit": 5,
+              "table": "transactions_1k"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) as cnt FROM transactions_1k WHERE substr(Date,1,7) = '2013-06';"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT substr(Date,1,4) as yr, substr(Date,6,2) as mo, COUNT(*) cnt FROM transactions_1k GROUP BY yr, mo ORDER BY yr, mo LIMIT 10;"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT Date FROM transactions_1k WHERE Date LIKE '%201306%' LIMIT 5;"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT Date, length(Date) as len FROM transactions_1k LIMIT 10;"
+            }
+          }
+        ],
+        "prompt_tokens": 15989,
+        "completion_tokens": 1022,
+        "cost_usd": 0.0030115499999999996,
+        "latency_ms": 9219.4
+      },
+      {
+        "question_id": 1506,
+        "db_id": "debit_card_specializing",
+        "question": "Please list the product descriptions of the transactions taken place in the gas stations in the Czech Republic.",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT T3.Description FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID INNER JOIN products AS T3 ON T1.ProductID = T3.ProductID WHERE T2.Country = 'CZE'",
+        "predicted_sql": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID JOIN products p ON t.ProductID = p.ProductID WHERE g.Country = 'CZE'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID JOIN products p ON t.ProductID = p.ProductID WHERE g.Country = 'CZE'",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'assistant\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"assistant\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT DISTINCT p.Description FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID JOIN products p ON t.ProductID = p.ProductID WHERE g.Country = 'CZE'\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT p.Description FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID JOIN products p ON t.ProductID = p.ProductID WHERE g.Country = 'CZE'"
+            }
+          }
+        ],
+        "prompt_tokens": 5252,
+        "completion_tokens": 458,
+        "cost_usd": 0.0010626,
+        "latency_ms": 6869.8
+      },
+      {
+        "question_id": 1507,
+        "db_id": "debit_card_specializing",
+        "question": "Please list the disparate time of the transactions taken place in the gas stations from chain no. 11.",
+        "difficulty": "simple",
+        "split": "dev",
+        "gold_sql": "SELECT DISTINCT T1.Time FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.ChainID = 11",
+        "predicted_sql": "SELECT DISTINCT t.Time FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.ChainID = 11 ORDER BY t.Time",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT DISTINCT t.Time FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.ChainID = 11 ORDER BY t.Time",
+        "stopped": "stopped without a query",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT DISTINCT t.Time FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.ChainID = 11 ORDER BY t.Time"
+            }
+          }
+        ],
+        "prompt_tokens": 6901,
+        "completion_tokens": 483,
+        "cost_usd": 0.00132495,
+        "latency_ms": 4262.2
+      },
+      {
+        "question_id": 1509,
+        "db_id": "debit_card_specializing",
+        "question": "Among the transactions made in the gas stations in the Czech Republic, how many of them are taken place after 2012/1/1?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT COUNT(T1.TransactionID) FROM transactions_1k AS T1 INNER JOIN gasstations AS T2 ON T1.GasStationID = T2.GasStationID WHERE T2.Country = 'CZE' AND STRFTIME('%Y', T1.Date) >= '2012'",
+        "predicted_sql": "SELECT COUNT(*) AS cnt FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01'",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 1,
+        "answered_via": "its last verified query",
+        "last_query": "SELECT COUNT(*) AS cnt FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01'",
+        "stopped": "the model call failed",
+        "error": "HTTP 400: {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'assistant\\u003c|channel|\\u003ecommentary' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"assistant\\u003c|channel|\\u003ecommentary\\\", \\\"arguments\\\": {\\\"sql\\\":\\\"SELECT COUNT(*) AS count FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date \\u003e '2012-01-01'\\\"}}\"}}\n",
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "gasstations",
+                "transactions_1k"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "SELECT COUNT(*) AS cnt FROM transactions_1k t JOIN gasstations g ON t.GasStationID = g.GasStationID WHERE g.Country = 'CZE' AND t.Date > '2012-01-01'"
+            }
+          }
+        ],
+        "prompt_tokens": 4907,
+        "completion_tokens": 439,
+        "cost_usd": 0.00099945,
+        "latency_ms": 2927.8
+      }
+    ]
+  }
+}
