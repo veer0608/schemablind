@@ -1,5 +1,7 @@
 # schemablind
 
+[![ci](https://github.com/veer0608/schemablind/actions/workflows/ci.yml/badge.svg)](https://github.com/veer0608/schemablind/actions/workflows/ci.yml)
+
 A SQL agent that is **given no schema**. It gets a database it has never seen,
 four verbs, and a question — and has to find its own way to the answer.
 
