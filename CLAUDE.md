@@ -59,5 +59,6 @@ wasted run. The short version:
 
 - The key lives in a gitignored `.env` (`GROQ_API_KEY`, `GEMINI_API_KEY`), parsed by
   `llm.py`'s own `load_dotenv` — it handles UTF-16 written by PowerShell.
-- Shell is PowerShell; `ls -la` and other POSIX flags fail there.
-- Docker cannot run on this machine (Win11 Home / VBS). Do not propose it.
+
+Machine-wide constraints (PowerShell, no Docker, Groq's invisible daily cap) live in
+`~/.claude/CLAUDE.md` and are not repeated here.
