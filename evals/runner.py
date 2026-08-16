@@ -35,6 +35,7 @@ from schemablind.llm import QuotaExhausted, Usage, build_client
 from schemablind.sandbox import Sandbox
 from schemablind.scoring import CORRECT, Judgement, category, judge
 
+from .checkpoint import Checkpoint
 from .dataset import Question, bird, database_for, load_questions, toy
 
 HERE = Path(__file__).parent
@@ -198,11 +199,10 @@ def score(
     *,
     delay: float = 0.0,
     on_progress: Callable[[int, int], None] | None = None,
+    cache: Checkpoint | None = None,
 ) -> Scorecard:
     card = Scorecard(name=name)
     for index, question in enumerate(questions, 1):
-        if delay and index > 1:
-            time.sleep(delay)
         try:
             path = database_for(question.db_id, databases)
         except FileNotFoundError as exc:
@@ -210,15 +210,27 @@ def score(
             return card
 
         with Sandbox(path) as sandbox:
-            try:
-                transcript = solver(question, sandbox)
-            except QuotaExhausted as exc:
-                # Every question after this scores zero for never being asked,
-                # which a scorecard cannot tell apart from getting them wrong.
-                card.abandoned = (
-                    f"stopped after {index - 1} of {len(questions)}: {exc}"
-                )
-                return card
+            answered = cache.get(name, question) if cache is not None else None
+            if answered is not None:
+                # Already paid for on an earlier run. Re-judged below rather
+                # than trusted, so the scorer stays the only thing deciding.
+                transcript = answered
+            else:
+                if delay and index > 1:
+                    time.sleep(delay)
+                try:
+                    transcript = solver(question, sandbox)
+                except QuotaExhausted as exc:
+                    # Every question after this scores zero for never being
+                    # asked, which a scorecard cannot tell apart from getting
+                    # them wrong. With a checkpoint the answers so far survive,
+                    # and the next run continues from here.
+                    card.abandoned = (
+                        f"stopped after {index - 1} of {len(questions)}: {exc}"
+                    )
+                    return card
+                if cache is not None:
+                    cache.put(name, question, transcript)
             verdict = (
                 judge(transcript.sql, question.gold_sql, sandbox)
                 if transcript.sql
@@ -416,6 +428,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-turns", type=int, default=12)
     parser.add_argument("--delay", type=float, default=0.0, help="seconds between questions")
     parser.add_argument("--json", type=Path)
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        help=(
+            "append each answered question here and reuse it on a later run, "
+            "so a run stopped by the daily token cap resumes instead of restarting"
+        ),
+    )
     parser.add_argument("--update-readme", action="store_true")
     parser.add_argument(
         "--check",
@@ -462,6 +482,13 @@ def main(argv: list[str] | None = None) -> int:
         print("nothing to run", file=sys.stderr)
         return 2
 
+    cache = Checkpoint(args.checkpoint).load() if args.checkpoint else None
+    if cache is not None and len(cache):
+        print(
+            f"  checkpoint {args.checkpoint}: {len(cache)} already answered",
+            file=sys.stderr,
+        )
+
     cards = []
     for name, solver in solvers:
         started = time.perf_counter()
@@ -485,9 +512,16 @@ def main(argv: list[str] | None = None) -> int:
                 databases,
                 delay=args.delay,
                 on_progress=None if name in (ORACLE, MUTE) else progress,
+                cache=None if name in (ORACLE, MUTE) else cache,
             )
         )
         print(f"  ran {name} in {time.perf_counter() - started:.1f}s", file=sys.stderr)
+        if cache is not None and cache.resumed:
+            print(
+                f"    {cache.resumed} of those came from the checkpoint",
+                file=sys.stderr,
+            )
+            cache.resumed = 0
 
     print()
     print(report(cards, questions))

@@ -127,6 +127,26 @@ change and nothing else.
 python -m evals.runner --bird --solvers oracle
 ```
 
+### A run that does not finish in one day
+
+500 questions do not fit inside a free tier's daily allowance, and a run stopped
+partway is still worth what it already paid for. `--checkpoint` appends each
+answered question as it is answered, and reuses it next time:
+
+```bash
+python -m evals.runner --bird --solvers openai/gpt-oss-120b --checkpoint runs/held-out.jsonl
+```
+
+Run it again tomorrow with the same file and it picks up where the allowance ran
+out. Only the model's half is stored — judging is local and free, so it is redone
+on every load and a change to the scorer can never be masked by a verdict
+recorded under the old one.
+
+This does not weaken what a complete card means. A run that ends early is still
+abandoned rather than scored; the checkpoint only means the next run starts from
+question 91 instead of question 1, until one of them reaches the end and the card
+is complete for real.
+
 ## The scorecard
 
 <!-- SCORECARD -->
@@ -152,6 +172,13 @@ to suit it.
 hits the daily token cap is abandoned rather than scored — the questions it
 never reached would count as answers it got wrong. Free-tier budget has ended
 three runs that way so far.
+
+Those three runs also threw away every answer they had already paid for, which
+is why the cap was fatal rather than merely slow. It is not any more:
+`--checkpoint` keeps each answered question, so a capped run now resumes instead
+of restarting, and a complete card can be assembled across several days of
+allowance. The scoring rule is unchanged — an unfinished run is still not a
+number.
 
 What there is, on `openai/gpt-oss-120b`, is indicative and small:
 
