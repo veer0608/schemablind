@@ -195,8 +195,15 @@ prompt rules **generalised**: they were written from dev failures and scored no
 worse on questions they had never seen. The same discipline on a sister project
 caught the opposite result, which is the point of running it.
 
-Getting from here to a real number is 215 more held-out questions — a few days
-of free tier, or about a dollar.
+Getting from here to a real number is the rest of the held-out half: roughly 180
+more questions — 40% of 500, less the five quarantined, less the twelve already
+answered. Roughly, because that denominator has never actually been printed.
+`--bird --split test --solvers oracle` settles it exactly, for free, before a
+single token is spent.
+
+Those twelve do not carry over. The run JSON keeps `predicted_sql` but not the
+transcript, and the checkpoint needs the transcript — so they are a measurement
+that already happened, not a down payment on the next one.
 
 #### What changed it
 
@@ -231,22 +238,43 @@ Two earlier estimates were both wrong and both too low — reasoning from schema
 sizes gave 8,750, and the toy set suggested 9,500. Real questions need more
 turns, and turns are what cost.
 
+Batching `describe_table` later brought that down to 5.5 turns and 8,360 tokens
+— but on the **dev** half, and the run this project still owes is the held-out
+one. There the same agent costs **11,816 tokens over 6.6 turns**, 41% more. So
+a third estimate was wrong for a third reason, and this one is the least
+excusable: not optimism about the agent, just a number measured on the half that
+was cheap and quietly generalised to the half that is not.
+
+Planning therefore uses the held-out figure:
+
 | | free tier | paid |
 |---|---|---|
-| per question | ~13,600 tokens | ~$0.0016 |
-| daily cap | 100–200k tokens per model | none |
-| **questions/day/model** | **~15** | unlimited |
-| **500 questions × 3 models** | **~34 days per model** | **~$2.40** |
+| per question, held-out half | ~11,800 tokens | ~$0.0021 |
+| daily cap | 200k tokens per model | none |
+| **questions/day/model** | **~16** | unlimited |
+| **held-out half (~195 q) × 3 models** | **~13 days** | **~$0.75** |
+| **all 500 × 3 models** | **~32 days** | **~$1.90** |
 
-The free tier's daily token cap is what blocks this, not the money — the whole
-three-model comparison costs about **$1.50**. And that daily limit appears in
-**no response header**: the per-minute bucket reads a healthy 12,000 while the
-daily budget
-is already gone, and the real limit is only named in the body of the 429 that
-eventually refuses you. So a daily refusal is its own error type here, and a
-run that hits one is **abandoned rather than scored** — the questions it never
-reached would otherwise count as answers it got wrong, which a scorecard cannot
-tell apart from a model that got them wrong.
+Two things make that cheaper than the earlier estimate rather than dearer,
+despite the per-question cost going up. The cap is **per model** — 200,000 is
+what the 429 names for `openai/gpt-oss-120b` — and `run()` abandons one card
+without touching the next, so three solvers in one invocation draw on three
+independent budgets and take one model's wall clock, not three. And the card
+this project owes is the held-out one: paying for all 500 buys 305 answers on
+the half the prompt was tuned against, whose number should not be quoted anyway.
+
+The paid column assumes the cheap end of the Groq basket and the token split
+measured on `gpt-oss-120b`; a weaker model that needs more turns will cost more
+than its price-per-token suggests.
+
+The free tier's daily token cap is what blocks this, not the money. And that
+daily limit appears in **no response header**: the per-minute bucket reads a
+healthy 12,000 while the daily budget is already gone, and the real limit is
+only named in the body of the 429 that eventually refuses you. So a daily
+refusal is its own error type here, and a run that hits one is **abandoned
+rather than scored** — the questions it never reached would otherwise count as
+answers it got wrong, which a scorecard cannot tell apart from a model that got
+them wrong.
 
 ## Holding a test half back
 
