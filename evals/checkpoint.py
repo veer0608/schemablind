@@ -23,7 +23,7 @@ import json
 from pathlib import Path
 from typing import Iterator
 
-from schemablind.agent import Transcript
+from schemablind.agent import FAILED, Transcript
 from schemablind.llm import Usage
 
 from evals.dataset import Question
@@ -142,6 +142,17 @@ class Checkpoint:
     # --- writing ----------------------------------------------------------
 
     def put(self, solver: str, question: Question, transcript: Transcript) -> None:
+        """Record an answer. A question the model never answered is not one.
+
+        A transport failure -- a rate limit, a timeout, a 5xx -- says nothing
+        about the agent, but it arrives shaped exactly like a question the
+        agent failed: no SQL, and it scores zero. Persisting that bakes the
+        outage into every later run that resumes from this file, and the
+        scorecard cannot tell the two apart. So it is not written, and the
+        next run asks the question again.
+        """
+        if transcript.stopped == FAILED:
+            return
         identifier = key(solver, question)
         self._answers[identifier] = transcript
         self.path.parent.mkdir(parents=True, exist_ok=True)

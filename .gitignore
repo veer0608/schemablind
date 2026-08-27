@@ -20,3 +20,8 @@ venv/
 *.egg-info/
 build/
 dist/
+
+# Eval output: scorecards, checkpoints and logs from real runs. Reproducible
+# from the runner, specific to one key's daily budget, and large. The numbers
+# worth keeping go in the README, not here.
+/runs/

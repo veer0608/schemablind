@@ -260,3 +260,52 @@ class TestTheHarnessSolversAreNotCached:
 
         assert card.summary()["execution_accuracy"] == 1.0
         assert len(cache) == len(questions), "cache should still record, not skip"
+
+
+class TestATransportFailureIsNotAnAnswer:
+    """A rate limit says nothing about the agent, and must not be saved as if it did.
+
+    This is the bug that cost a whole BIRD run on 2026-08-27: 110 of 227
+    questions came back as HTTP 429, were recorded as "no query produced",
+    were checkpointed, and were then reused by the next run -- which reported
+    33% execution accuracy for an agent that had never been asked half the
+    questions.
+    """
+
+    def test_a_failed_model_call_is_not_written(self, toy_set, tmp_path):
+        from schemablind.agent import FAILED
+
+        path = tmp_path / "cache.jsonl"
+        cache = Checkpoint(path)
+        questions, _ = toy_set
+        question = questions[0]
+        failed = Transcript(sql=None, stopped=FAILED, turns=1, error="HTTP 429: ...")
+
+        cache.put("gemini:flash", question, failed)
+
+        assert not path.exists() or path.read_text(encoding="utf-8").strip() == ""
+        assert cache.get("gemini:flash", question) is None
+
+    def test_the_question_is_asked_again_on_the_next_run(self, toy_set, tmp_path):
+        from schemablind.agent import FAILED
+
+        path = tmp_path / "cache.jsonl"
+        questions, _ = toy_set
+        question = questions[0]
+        Checkpoint(path).put(
+            "gemini:flash", question, Transcript(sql=None, stopped=FAILED, turns=1)
+        )
+
+        resumed = Checkpoint(path).load()
+
+        assert len(resumed) == 0
+
+    def test_a_real_answer_is_still_written(self, toy_set, tmp_path):
+        path = tmp_path / "cache.jsonl"
+        cache = Checkpoint(path)
+        questions, _ = toy_set
+        question = questions[0]
+
+        cache.put("gemini:flash", question, transcript_for())
+
+        assert Checkpoint(path).load().get("gemini:flash", question) is not None
