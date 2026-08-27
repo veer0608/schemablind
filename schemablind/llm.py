@@ -45,16 +45,21 @@ class Provider:
     base_url: str
     key_env: str | None
     default_model: str
+    #: Seconds between requests, for a provider whose per-minute cap is known
+    #: but unreadable from any response header. 0 means pace on headers alone.
+    min_interval: float = 0.0
 
 
 PROVIDERS: dict[str, Provider] = {
     "groq": Provider("groq", "https://api.groq.com/openai/v1", "GROQ_API_KEY", "openai/gpt-oss-20b"),
     "openai": Provider("openai", "https://api.openai.com/v1", "OPENAI_API_KEY", "gpt-4o-mini"),
+    # 15 requests/minute on the free tier, published in no response header.
     "gemini": Provider(
         "gemini",
         "https://generativelanguage.googleapis.com/v1beta/openai",
         "GEMINI_API_KEY",
         "gemini-3.7-flash",
+        min_interval=4.0,
     ),
     "together": Provider(
         "together", "https://api.together.xyz/v1", "TOGETHER_API_KEY",
@@ -169,6 +174,12 @@ class QuotaExhausted(LLMError):
 #: the space-separated pattern missed -- so a 60-question run spent every
 #: single question on four retries of a limit that was never going to lift.
 _DAILY_LIMIT = re.compile(r"per[ _-]?day|\bTPD\b|\bRPD\b", re.I)
+#: Gemini sends no Retry-After header. It puts the wait in the body instead --
+#: "Please retry in 39.551862516s", and a RetryInfo detail with "retryDelay".
+#: Backing off 1s, 2s, 4s against a 40s window burns every attempt and records
+#: the question as one the agent could not answer, which is a wrong number and
+#: not merely a slow one. This poisoned 110 of 227 questions on 2026-08-27.
+_RETRY_HINT = re.compile(r'retry in\s+([0-9.]+)\s*s|"retryDelay"\s*:\s*"([0-9.]+)s"', re.I)
 _DURATION = re.compile(
     r"(?:(\d+(?:\.\d+)?)h)?(?:(\d+(?:\.\d+)?)m(?!s))?(?:(\d+(?:\.\d+)?)s)?(?:(\d+(?:\.\d+)?)ms)?$"
 )
@@ -200,6 +211,7 @@ class OpenAICompatibleClient:
 
     RETRY_ON = frozenset({408, 409, 429, 500, 502, 503, 504})
     HEADROOM_TOKENS = 2500
+    MAX_BACKOFF = 90.0
 
     def __init__(
         self,
@@ -210,6 +222,7 @@ class OpenAICompatibleClient:
         timeout: float = 120.0,
         attempts: int = 4,
         temperature: float = 0.0,
+        min_interval: float = 0.0,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
@@ -222,6 +235,12 @@ class OpenAICompatibleClient:
         #: reports is the model's response time and not this client's own sleep.
         #: A latency column measuring your own throttling is a wrong number.
         self._last_headers = None
+        #: Seconds to leave between requests. A provider that publishes a
+        #: per-minute request cap but nothing in the response to pace on can
+        #: only be paced from a known number. Sleeping ahead of the limit is
+        #: cheaper than being refused at it.
+        self._min_interval = min_interval
+        self._next_allowed = 0.0
 
     def chat(
         self, *, messages: list[dict], tools: list[dict], force: str | None = None
@@ -295,6 +314,7 @@ class OpenAICompatibleClient:
         data = json.dumps(payload).encode()
         last = "no attempt was made"
         for attempt in range(1, self._attempts + 1):
+            self._throttle()
             request = urllib.request.Request(
                 f"{self.base_url}{path}", data=data, headers=headers, method="POST"
             )
@@ -310,7 +330,7 @@ class OpenAICompatibleClient:
                     raise QuotaExhausted(last) from exc
                 if exc.code not in self.RETRY_ON or attempt == self._attempts:
                     raise LLMError(last) from exc
-                self._wait(exc, attempt)
+                self._wait(exc, attempt, detail)
             except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
                 last = f"{type(exc).__name__}: {exc}"
                 if attempt == self._attempts:
@@ -334,15 +354,42 @@ class OpenAICompatibleClient:
         if delay:
             time.sleep(min(delay + 0.2, 65.0))
 
-    def _wait(self, exc: urllib.error.HTTPError | None, attempt: int) -> None:
+    def _throttle(self) -> None:
+        """Hold the floor between requests when there are no headers to pace on."""
+        if not self._min_interval:
+            return
+        now = time.monotonic()
+        if now < self._next_allowed:
+            time.sleep(self._next_allowed - now)
+        self._next_allowed = time.monotonic() + self._min_interval
+
+    def _wait(
+        self,
+        exc: urllib.error.HTTPError | None,
+        attempt: int,
+        detail: str = "",
+    ) -> None:
+        """Sleep as long as the provider asked for, not as long as we guessed.
+
+        Order matters: an explicit instruction beats a header, and a header
+        beats exponential backoff. Guessing shorter than the window the
+        provider named spends every remaining attempt being refused again.
+        """
         delay = min(2.0 ** (attempt - 1), 30.0)
         if exc is not None and exc.headers:
             header = exc.headers.get("Retry-After")
             if header:
                 try:
-                    delay = min(float(header), 60.0)
+                    delay = min(float(header), self.MAX_BACKOFF)
                 except ValueError:
                     pass
+        hint = _RETRY_HINT.search(detail or "")
+        if hint:
+            try:
+                asked = float(hint.group(1) or hint.group(2))
+                delay = min(max(delay, asked + 1.0), self.MAX_BACKOFF)
+            except (TypeError, ValueError):
+                pass
         time.sleep(delay)
 
 
@@ -413,6 +460,7 @@ def build_client(provider: str | None = None, model: str | None = None, **kwargs
     api_key = os.environ.get(chosen.key_env) if chosen.key_env else None
     if chosen.key_env and not api_key:
         return None
+    kwargs.setdefault("min_interval", chosen.min_interval)
     return OpenAICompatibleClient(
         base_url=chosen.base_url, api_key=api_key, model=model_id, **kwargs
     )

@@ -176,3 +176,59 @@ class TestTheAdvertisedSchema:
 
         for leak in ("schools", "students", "scores", "sch_id", "cnty"):
             assert leak not in blob
+
+
+class TestBackoffHonoursWhatTheProviderAsked:
+    """Gemini names its wait in the body, not in a Retry-After header.
+
+    Backing off 1s, 2s, 4s against the 40s window it asked for spends every
+    attempt being refused again, and the question is then recorded as one the
+    agent could not answer.
+    """
+
+    def test_the_body_hint_beats_exponential_backoff(self, monkeypatch):
+        from schemablind.llm import OpenAICompatibleClient
+
+        slept = []
+        monkeypatch.setattr("schemablind.llm.time.sleep", slept.append)
+        client = OpenAICompatibleClient(base_url="http://x", api_key="k", model="m")
+
+        client._wait(None, 1, 'Please retry in 39.551862516s.')
+
+        assert slept and 40.0 <= slept[0] <= 41.0
+
+    def test_a_retry_delay_field_is_read_too(self, monkeypatch):
+        from schemablind.llm import OpenAICompatibleClient
+
+        slept = []
+        monkeypatch.setattr("schemablind.llm.time.sleep", slept.append)
+        client = OpenAICompatibleClient(base_url="http://x", api_key="k", model="m")
+
+        client._wait(None, 1, '{"retryDelay": "39s"}')
+
+        assert slept and 39.0 <= slept[0] <= 41.0
+
+    def test_without_a_hint_it_still_backs_off(self, monkeypatch):
+        from schemablind.llm import OpenAICompatibleClient
+
+        slept = []
+        monkeypatch.setattr("schemablind.llm.time.sleep", slept.append)
+        client = OpenAICompatibleClient(base_url="http://x", api_key="k", model="m")
+
+        client._wait(None, 3, "no idea what went wrong")
+
+        assert slept == [4.0]
+
+    def test_pacing_holds_the_floor_between_requests(self, monkeypatch):
+        from schemablind.llm import OpenAICompatibleClient
+
+        slept = []
+        monkeypatch.setattr("schemablind.llm.time.sleep", slept.append)
+        client = OpenAICompatibleClient(
+            base_url="http://x", api_key="k", model="m", min_interval=4.0
+        )
+
+        client._throttle()
+        client._throttle()
+
+        assert slept and 3.0 <= slept[0] <= 4.0
