@@ -67,20 +67,48 @@ not the question names them. That is a prompt-shaped gap, not a reasoning one.
 Two databases carry 23 of the 51 failures. That is worth more than the overall
 rate, because it says the gap is not uniform incompetence at SQL.
 
-Reading the `debit_card_specializing` ones, the pattern is a **denominator
+Reading the `debit_card_specializing` ones, one pattern is a **denominator
 dispute on an underspecified question**. "What is the percentage of the
 customers who used EUR on 2012/8/25" - the gold counts rows of transactions,
 the agent counts `DISTINCT CustomerID`. Both read the English correctly; only
-one matches the gold. Same shape on "average monthly consumption", where the
-gold divides a joined `AVG` by 12 and the agent averages differently. These are
-not reasoning failures the agent could have avoided by exploring harder, and a
-schema-blind agent has no way to learn the convention from the schema - which is
-worth saying plainly rather than counting them as SQL mistakes.
+one matches the gold.
+
+**Correction to an earlier draft of this file.** It said these are not failures
+the agent could have avoided, and that a schema-blind agent has no way to learn
+the convention. Both claims were too generous, and checking them took running
+every failing pair rather than reading three of them:
+
+- **The agent is given BIRD's `evidence` field as a hint** (`agent.solve(...,
+  evidence=question.evidence)`), and all 14 thrombosis failures carry one. It is
+  not working blind on the convention; it is not following the hint.
+- On Q1150 the agent's arithmetic is *identical* to the gold and it simply
+  omits the `* 100` that the word percentage implies. Q881 is the same. So two
+  of the 33 are a scaling slip, which is the agent being wrong, not the
+  question being ambiguous.
+
+Running the gold and the agent query for all 33 value failures and comparing
+what came back: 18 are genuinely different numbers, 7 are multi-row or
+multi-column, 4 return something not numeric, 2 are the missing `* 100`, and 2
+come back equal within rounding.
 
 `thrombosis_prediction` is the one to look at properly once the split is done:
 61% is far off the rest, its columns are medical abbreviations, and its
 questions lean on conventions ("normal platelet level") that live in the
 evidence field rather than the schema.
+
+## One failure is the scorer, and it is staying
+
+Of the two that come back equal within rounding, one is real: Q1473 returns
+`459.95626428710585` where the gold is `459.9562642871061`. Thirteen significant
+figures agree; they differ in the last bits of a float. `_same_set` compares
+`set(predicted.rows) == set(gold.rows)`, so that scores as wrong. (The other,
+Q1037, is genuinely different: 24.561 against 24.567.)
+
+**That exact-equality comparison is BIRD's own, and it should stay.** The whole
+argument for this metric is that the number means something to someone who has
+never seen this repo, and a tolerant comparison would quietly stop being BIRD's
+number. The honest handling is to know the cost: one question in 162, about 0.6
+points, charged against the agent for a float representation.
 
 ## What is deliberately not being done yet
 
