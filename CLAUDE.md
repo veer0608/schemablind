@@ -34,7 +34,14 @@ wasted run. The short version:
   succeeds while the daily allowance is gone and proves nothing.
 - Budgets are **per model per day**, ~200k tokens. A real question costs ~12,400
   tokens over ~7 turns, so a free tier affords **~16 questions/day/model**.
-- Free tiers do not reset on a calendar day. Check, never assume.
+- Free tiers do not reset on a calendar day. Check, never assume. Check when the
+  last run **stopped**, too: a window that opened hours ago may already be spent.
+- **A second key from a second project is a second allowance.** The refusal names
+  its own quota: `GenerateRequestsPerDayPerProjectPerModel-FreeTier`. Put extra keys
+  in `.env` as `GEMINI_API_KEY_2`, `_3`, and the client moves to the next one when a
+  per-day refusal arrives, without stopping the run. The model id does not change, so
+  a split that crosses keys is still one comparable run. A key from the *same*
+  project shares the same allowance and buys nothing.
 - Always pass `--checkpoint PATH`. A capped run then resumes instead of restarting.
 - `--split dev` while iterating. `--split test` only when reporting a finished result.
 
@@ -58,7 +65,9 @@ wasted run. The short version:
 ## Environment
 
 - The key lives in a gitignored `.env` (`GROQ_API_KEY`, `GEMINI_API_KEY`), parsed by
-  `llm.py`'s own `load_dotenv` — it handles UTF-16 written by PowerShell.
+  `llm.py`'s own `load_dotenv` — it handles UTF-16 written by PowerShell. Numbered
+  siblings (`GEMINI_API_KEY_2`, `_3`) are spare allowances, spent in order.
+  `load_dotenv` uses `setdefault`, so a shell variable always beats the file.
 
 Machine-wide constraints (PowerShell, no Docker, Groq's invisible daily cap) live in
 `~/.claude/CLAUDE.md` and are not repeated here.
