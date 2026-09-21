@@ -52,6 +52,18 @@ class TestTheHarnessProvesItself:
         assert main(["--check"]) == 0
         assert "oracle 100.0%" in capsys.readouterr().out
 
+    def test_help_renders(self, capsys):
+        """`--help` died with "ValueError: incomplete format": argparse
+        interpolates help strings, and one of them said 100% rather than 100%%.
+        Nothing exercised --help, so the way to find it was to need it."""
+        import pytest
+
+        with pytest.raises(SystemExit) as exit:
+            main(["--help"])
+
+        assert exit.value.code == 0
+        assert "--checkpoint" in capsys.readouterr().out
+
 
 class TestScoringAnAgent:
     def _card(self, toy_set, sql_for):

@@ -440,7 +440,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="CI mode: the oracle must score 100% and the mute agent 0%",
+        # argparse interpolates help strings, so a bare % raises
+        # "ValueError: incomplete format" and takes --help down with it
+        help="CI mode: the oracle must score 100%% and the mute agent 0%%",
     )
     args = parser.parse_args(argv)
 
