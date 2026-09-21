@@ -53,6 +53,35 @@ So of 13, perhaps 4 are the agent being wrong about what to return, and the rest
 are BIRD's convention that a result carries the identifying columns whether or
 not the question names them. That is a prompt-shaped gap, not a reasoning one.
 
+## The failures are not spread evenly across databases
+
+| database | asked | failed | fail rate |
+|---|---|---|---|
+| thrombosis_prediction | 23 | 14 | 61% |
+| debit_card_specializing | 22 | 9 | 41% |
+| formula_1 | 37 | 13 | 35% |
+| european_football_2 | 35 | 8 | 23% |
+| student_club | 18 | 3 | 17% |
+| superhero | 24 | 3 | 12% |
+
+Two databases carry 23 of the 51 failures. That is worth more than the overall
+rate, because it says the gap is not uniform incompetence at SQL.
+
+Reading the `debit_card_specializing` ones, the pattern is a **denominator
+dispute on an underspecified question**. "What is the percentage of the
+customers who used EUR on 2012/8/25" - the gold counts rows of transactions,
+the agent counts `DISTINCT CustomerID`. Both read the English correctly; only
+one matches the gold. Same shape on "average monthly consumption", where the
+gold divides a joined `AVG` by 12 and the agent averages differently. These are
+not reasoning failures the agent could have avoided by exploring harder, and a
+schema-blind agent has no way to learn the convention from the schema - which is
+worth saying plainly rather than counting them as SQL mistakes.
+
+`thrombosis_prediction` is the one to look at properly once the split is done:
+61% is far off the rest, its columns are medical abbreviations, and its
+questions lean on conventions ("normal platelet level") that live in the
+evidence field rather than the schema.
+
 ## What is deliberately not being done yet
 
 **The agent is not being changed until the split finishes.** A prompt rule about
