@@ -31,9 +31,41 @@ class Question:
     difficulty: str = "simple"
 
 
+def deduplicate(questions: list[Question]) -> list[Question]:
+    """One row per question, because a repeat is counted twice.
+
+    BIRD Mini-Dev ships two exact repeats -- `financial` 137 and 138, each
+    appearing with the same id, the same text and the same gold SQL. Left in,
+    they are asked twice, scored twice and weighted twice: the 2026-09-23 dev
+    run got both right, which lifted 64.7% to 64.9% for no work at all. A
+    repeat also inflates the cost and turn columns by asking again.
+
+    A pair that shares an id while differing in text is a different animal and
+    is refused rather than merged. The checkpoint keys on (solver, db_id,
+    question_id), so such a pair would be served its twin's cached answer --
+    a wrong answer, silently, and only on the second run.
+    """
+    seen: dict[tuple[str, int], Question] = {}
+    kept: list[Question] = []
+    for question in questions:
+        key = (question.db_id, question.question_id)
+        earlier = seen.get(key)
+        if earlier is None:
+            seen[key] = question
+            kept.append(question)
+            continue
+        if (earlier.question, earlier.gold_sql) != (question.question, question.gold_sql):
+            raise ValueError(
+                f"two different questions share {question.db_id} id "
+                f"{question.question_id}. A checkpoint would serve one of them "
+                f"the other's answer, so this cannot be loaded as it stands."
+            )
+    return kept
+
+
 def load_questions(path: Path) -> list[Question]:
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
-    return [
+    return deduplicate([
         Question(
             question_id=int(entry.get("question_id", index)),
             db_id=entry["db_id"],
@@ -45,7 +77,7 @@ def load_questions(path: Path) -> list[Question]:
             difficulty=entry.get("difficulty", "simple"),
         )
         for index, entry in enumerate(raw)
-    ]
+    ])
 
 
 def database_for(db_id: str, databases: Path) -> Path:
