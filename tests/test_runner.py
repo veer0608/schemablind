@@ -9,6 +9,7 @@ import pytest
 from evals.dataset import Question, toy
 from evals.runner import (
     MARKERS,
+    Result,
     republish,
     MUTE,
     ORACLE,
@@ -259,7 +260,7 @@ class TestRepublishing:
         assert republish([self.saved(tmp_path)]) == 0
 
         printed = capsys.readouterr().out
-        assert "| gemini-3.5-flash-lite | 62.5% | 60.0% | 100.0% | 5.5 |" in printed
+        assert "| gemini-3.5-flash-lite | 268 | 62.5% | 60.0% | 100.0% | 5.5 |" in printed
 
     def test_an_abandoned_run_is_named_rather_than_silently_dropped(
         self, tmp_path, capsys
@@ -330,7 +331,7 @@ class TestRepublishing:
         written = readme.read_text(encoding="utf-8")
         assert "old" not in written
         assert "head" in written and "tail" in written
-        assert "| gemini-3.5-flash-lite | 62.5%" in written
+        assert "| gemini-3.5-flash-lite | 268 | 62.5%" in written
 
     def test_republishing_asks_no_model_and_needs_no_dataset(self, tmp_path, capsys):
         """--from-json must not touch a solver: that is the whole point."""
@@ -339,3 +340,64 @@ class TestRepublishing:
         assert main(["--from-json", str(self.saved(tmp_path))]) == 0
         assert monkeypatched == []
         assert "| gemini-3.5-flash-lite |" in capsys.readouterr().out
+
+
+class TestTheRowSaysWhatItMeasured:
+    """A dev number and a held-out number are different claims."""
+
+    def saved(self, tmp_path, by_split):
+        path = tmp_path / "run.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "m": {
+                        "abandoned": "",
+                        "summary": {
+                            "n": sum(v["n"] for v in by_split.values() if v),
+                            "execution_accuracy": 0.5,
+                            "strict_accuracy": 0.5,
+                            "produced_sql": 1.0,
+                            "cost_per_question": 0.0,
+                            "p50_latency_ms": 0.0,
+                            "turns": 1.0,
+                        },
+                        "by_split": by_split,
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    def test_a_dev_only_run_says_dev(self, tmp_path, capsys):
+        path = self.saved(tmp_path, {"dev": {"n": 266}, "test": None})
+
+        republish([path])
+
+        assert "| m | 266 dev |" in capsys.readouterr().out
+
+    def test_a_held_out_run_says_test(self, tmp_path, capsys):
+        path = self.saved(tmp_path, {"dev": None, "test": {"n": 232}})
+
+        republish([path])
+
+        assert "| m | 232 test |" in capsys.readouterr().out
+
+    def test_a_whole_set_names_both_halves(self, tmp_path, capsys):
+        path = self.saved(tmp_path, {"dev": {"n": 266}, "test": {"n": 232}})
+
+        republish([path])
+
+        assert "| m | 498 dev+test |" in capsys.readouterr().out
+
+    def test_a_live_card_labels_itself_the_same_way(self):
+        questions = [q for q in toy()[0]][:3]
+        card = Scorecard(
+            name="x",
+            results=[
+                Result(question=q, transcript=Transcript(sql="SELECT 1"), judgement=None)
+                for q in questions
+            ],
+        )
+
+        assert card.scope() == "3 dev"

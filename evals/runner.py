@@ -182,6 +182,16 @@ class Scorecard:
             "tokens": statistics.mean([r.transcript.total_tokens for r in rows]),
         }
 
+    def scope(self) -> str:
+        """What the row was measured on, for the table to say out loud.
+
+        A number from the tuning half and a number from the held-out half are
+        different claims, and a table whose only label is the model name lets
+        the weaker one be read as the stronger.
+        """
+        present = {split_of(r.question) for r in self.results}
+        return _scope(len(self.results), present)
+
     def failures(self, split: str | None = None) -> dict[str, int]:
         counted: dict[str, int] = {}
         for result in self.within(split):
@@ -249,6 +259,12 @@ MARKERS = ("<!-- SCORECARD -->", "<!-- /SCORECARD -->")
 
 def _pct(value: float) -> str:
     return f"{value * 100:.1f}%"
+
+
+def _scope(n: int, splits: set[str]) -> str:
+    """`266 dev`, `232 test`, `498 dev+test` -- the claim the row is making."""
+    named = "+".join(s for s in SPLITS if s in splits)
+    return f"{n} {named}" if named else str(n)
 
 
 def _money(value: float | None) -> str:
@@ -351,8 +367,8 @@ def report(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
 
 def markdown(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
     rows = [
-        "| configuration | execution accuracy | strict | produced SQL | turns | $/question | p50 |",
-        "|---|---|---|---|---|---|---|",
+        "| configuration | questions | execution accuracy | strict | produced SQL | turns | $/question | p50 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for card in cards:
         if not card.complete:
@@ -361,7 +377,7 @@ def markdown(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
         if not s:
             continue
         rows.append(
-            f"| {card.name} | {_pct(s['execution_accuracy'])} "
+            f"| {card.name} | {card.scope()} | {_pct(s['execution_accuracy'])} "
             f"| {_pct(s['strict_accuracy'])} | {_pct(s['produced_sql'])} "
             f"| {s['turns']:.1f} | {_money(s['cost_per_question'])} "
             f"| {s['p50_latency_ms']:.0f} ms |"
@@ -386,6 +402,7 @@ class SavedCard:
     name: str
     abandoned: str
     saved: dict
+    by_split: dict
 
     @property
     def complete(self) -> bool:
@@ -393,6 +410,10 @@ class SavedCard:
 
     def summary(self) -> dict:
         return self.saved
+
+    def scope(self) -> str:
+        present = {s for s in SPLITS if (self.by_split.get(s) or {}).get("n")}
+        return _scope(int(self.saved.get("n") or 0), present)
 
 
 def load_cards(paths: Sequence[Path]) -> tuple[list[SavedCard], list[str]]:
@@ -419,6 +440,7 @@ def load_cards(paths: Sequence[Path]) -> tuple[list[SavedCard], list[str]]:
                 name=name,
                 abandoned=str(card.get("abandoned") or ""),
                 saved=card.get("summary") or {},
+                by_split=card.get("by_split") or {},
             )
         if not found:
             complaints.append(f"{path}: no scorecards in it")
