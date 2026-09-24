@@ -223,10 +223,17 @@ class OpenAICompatibleClient:
         attempts: int = 4,
         temperature: float = 0.0,
         min_interval: float = 0.0,
+        spare_keys: tuple[str, ...] = (),
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
-        self._api_key = api_key
+        #: Keys to spend in order. A free-tier daily allowance is granted per
+        #: project, so a key from a second project is a second allowance for
+        #: the same model -- the answers stay comparable because the model id
+        #: is unchanged. Exhausting the last one is what stops a run.
+        self._keys = [key for key in (api_key, *spare_keys) if key]
+        self._key_index = 0
+        self._api_key = self._keys[0] if self._keys else api_key
         self._timeout = timeout
         self._attempts = attempts
         self._temperature = temperature
@@ -313,7 +320,9 @@ class OpenAICompatibleClient:
             headers["Authorization"] = f"Bearer {self._api_key}"
         data = json.dumps(payload).encode()
         last = "no attempt was made"
-        for attempt in range(1, self._attempts + 1):
+        attempt = 0
+        while attempt < self._attempts:
+            attempt += 1
             self._throttle()
             request = urllib.request.Request(
                 f"{self.base_url}{path}", data=data, headers=headers, method="POST"
@@ -327,6 +336,12 @@ class OpenAICompatibleClient:
                 detail = exc.read().decode(errors="replace")[:1200]
                 last = f"HTTP {exc.code}: {detail}"
                 if exc.code == 429 and _DAILY_LIMIT.search(detail):
+                    if self._next_key():
+                        headers["Authorization"] = f"Bearer {self._api_key}"
+                        # A fresh allowance is not a retry of a failed call, so
+                        # it does not spend one of this request's attempts.
+                        attempt -= 1
+                        continue
                     raise QuotaExhausted(last) from exc
                 if exc.code not in self.RETRY_ON or attempt == self._attempts:
                     raise LLMError(last) from exc
@@ -337,6 +352,17 @@ class OpenAICompatibleClient:
                     raise LLMError(last) from exc
                 self._wait(None, attempt)
         raise LLMError(last)
+
+    def _next_key(self) -> bool:
+        """Move to the next spare key, if there is one. True when it moved."""
+        if self._key_index + 1 >= len(self._keys):
+            return False
+        self._key_index += 1
+        self._api_key = self._keys[self._key_index]
+        #: The per-minute cap is granted per project too, so a key that has
+        #: just arrived owes nothing to the pacing of the one before it.
+        self._next_allowed = 0.0
+        return True
 
     def _pace(self, headers) -> None:
         """Wait for the token bucket before it empties, not after."""
@@ -461,6 +487,24 @@ def build_client(provider: str | None = None, model: str | None = None, **kwargs
     if chosen.key_env and not api_key:
         return None
     kwargs.setdefault("min_interval", chosen.min_interval)
+    kwargs.setdefault("spare_keys", spare_keys(chosen.key_env))
     return OpenAICompatibleClient(
         base_url=chosen.base_url, api_key=api_key, model=model_id, **kwargs
     )
+
+
+def spare_keys(key_env: str | None) -> tuple[str, ...]:
+    """Extra keys named `KEY_2`, `KEY_3`, ... in order, skipping any gap.
+
+    A daily allowance is per project, so a key from a second project doubles
+    the day rather than sharing it. Numbering them keeps the first key the
+    one everything else already reads.
+    """
+    if not key_env:
+        return ()
+    found = []
+    for number in range(2, 10):
+        value = os.environ.get(f"{key_env}_{number}", "").strip()
+        if value:
+            found.append(value)
+    return tuple(found)
