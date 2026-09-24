@@ -182,6 +182,16 @@ class Scorecard:
             "tokens": statistics.mean([r.transcript.total_tokens for r in rows]),
         }
 
+    def scope(self) -> str:
+        """What the row was measured on, for the table to say out loud.
+
+        A number from the tuning half and a number from the held-out half are
+        different claims, and a table whose only label is the model name lets
+        the weaker one be read as the stronger.
+        """
+        present = {split_of(r.question) for r in self.results}
+        return _scope(len(self.results), present)
+
     def failures(self, split: str | None = None) -> dict[str, int]:
         counted: dict[str, int] = {}
         for result in self.within(split):
@@ -249,6 +259,12 @@ MARKERS = ("<!-- SCORECARD -->", "<!-- /SCORECARD -->")
 
 def _pct(value: float) -> str:
     return f"{value * 100:.1f}%"
+
+
+def _scope(n: int, splits: set[str]) -> str:
+    """`266 dev`, `232 test`, `498 dev+test` -- the claim the row is making."""
+    named = "+".join(s for s in SPLITS if s in splits)
+    return f"{n} {named}" if named else str(n)
 
 
 def _money(value: float | None) -> str:
@@ -351,8 +367,8 @@ def report(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
 
 def markdown(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
     rows = [
-        "| configuration | execution accuracy | strict | produced SQL | turns | $/question | p50 |",
-        "|---|---|---|---|---|---|---|",
+        "| configuration | questions | execution accuracy | strict | produced SQL | turns | $/question | p50 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for card in cards:
         if not card.complete:
@@ -361,12 +377,112 @@ def markdown(cards: Sequence[Scorecard], questions: Sequence[Question]) -> str:
         if not s:
             continue
         rows.append(
-            f"| {card.name} | {_pct(s['execution_accuracy'])} "
+            f"| {card.name} | {card.scope()} | {_pct(s['execution_accuracy'])} "
             f"| {_pct(s['strict_accuracy'])} | {_pct(s['produced_sql'])} "
             f"| {s['turns']:.1f} | {_money(s['cost_per_question'])} "
             f"| {s['p50_latency_ms']:.0f} ms |"
         )
     return "\n".join(rows)
+
+
+@dataclass(frozen=True)
+class SavedCard:
+    """A finished run read back from its JSON, standing in for a Scorecard.
+
+    It carries the summary the run computed rather than recomputing one, so a
+    republished row is the number that was actually paid for. It answers the
+    three things the table asks of a card and nothing else.
+
+    The one thing this cannot do is notice a scorer that has changed since.
+    Verdicts here were reached at run time; the checkpoint is the artefact that
+    re-judges on every load. So after touching `scoring`, reload the run from
+    its checkpoint rather than republishing its JSON.
+    """
+
+    name: str
+    abandoned: str
+    saved: dict
+    by_split: dict
+
+    @property
+    def complete(self) -> bool:
+        return not self.abandoned
+
+    def summary(self) -> dict:
+        return self.saved
+
+    def scope(self) -> str:
+        present = {s for s in SPLITS if (self.by_split.get(s) or {}).get("n")}
+        return _scope(int(self.saved.get("n") or 0), present)
+
+
+def load_cards(paths: Sequence[Path]) -> tuple[list[SavedCard], list[str]]:
+    """Cards from saved runs, in the order given, plus what was wrong."""
+    cards: dict[str, SavedCard] = {}
+    complaints: list[str] = []
+    for path in paths:
+        try:
+            body = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            complaints.append(f"{path}: not a readable run ({exc})")
+            continue
+        if not isinstance(body, dict):
+            complaints.append(f"{path}: not a run -- the top level is not an object")
+            continue
+        found = 0
+        for name, card in body.items():
+            if not isinstance(card, dict) or "summary" not in card:
+                continue
+            found += 1
+            if name in cards:
+                complaints.append(f"{path}: {name} replaces the same row read earlier")
+            cards[name] = SavedCard(
+                name=name,
+                abandoned=str(card.get("abandoned") or ""),
+                saved=card.get("summary") or {},
+                by_split=card.get("by_split") or {},
+            )
+        if not found:
+            complaints.append(f"{path}: no scorecards in it")
+    return list(cards.values()), complaints
+
+
+def republish(paths: Sequence[Path], *, update_readme: bool = False) -> int:
+    """Write the table from runs already paid for, calling no model.
+
+    Re-running to refresh a README spends a day's allowance to reproduce a
+    number that is already on disk, and can quietly produce a *different* one.
+    """
+    cards, complaints = load_cards(paths)
+    for complaint in complaints:
+        print(f"  {complaint}", file=sys.stderr)
+
+    for card in cards:
+        if card.complete:
+            n = card.summary().get("n", "?")
+            print(f"  {card.name}: {n} questions", file=sys.stderr)
+        else:
+            # Silence here would look like a row that simply did not exist.
+            print(
+                f"  {card.name}: not published -- {card.abandoned}", file=sys.stderr
+            )
+
+    body = markdown(cards, ())
+    if not any(card.complete for card in cards):
+        print(
+            "nothing complete to publish -- refusing to empty the scorecard",
+            file=sys.stderr,
+        )
+        return 2
+
+    print()
+    print(body)
+    if update_readme:
+        if not splice(REPO / "README.md", body):
+            print("README.md has no scorecard markers", file=sys.stderr)
+            return 1
+        print("\nwrote the scorecard into README.md")
+    return 0
 
 
 def splice(readme: Path, body: str) -> bool:
@@ -436,6 +552,16 @@ def main(argv: list[str] | None = None) -> int:
             "so a run stopped by the daily token cap resumes instead of restarting"
         ),
     )
+    parser.add_argument(
+        "--from-json",
+        type=Path,
+        nargs="+",
+        metavar="RUN",
+        help=(
+            "republish saved runs instead of running anything -- the only way "
+            "to write a number that was already paid for without paying again"
+        ),
+    )
     parser.add_argument("--update-readme", action="store_true")
     parser.add_argument(
         "--check",
@@ -445,6 +571,9 @@ def main(argv: list[str] | None = None) -> int:
         help="CI mode: the oracle must score 100%% and the mute agent 0%%",
     )
     args = parser.parse_args(argv)
+
+    if args.from_json:
+        return republish(args.from_json, update_readme=args.update_readme)
 
     if args.questions and args.databases:
         questions, databases = load_questions(args.questions), args.databases
