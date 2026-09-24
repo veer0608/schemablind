@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from evals.dataset import database_for, load_questions, toy
@@ -92,3 +94,60 @@ class TestBirdsLayout:
 
         assert loaded[0].evidence == ""
         assert loaded[0].question_id == 0
+
+
+class TestDuplicateQuestions:
+    """A question asked twice is scored twice and weighted twice."""
+
+    def written(self, tmp_path, entries):
+        path = tmp_path / "questions.json"
+        path.write_text(json.dumps(entries), encoding="utf-8")
+        return path
+
+    def entry(self, question_id=1, question="how many?", sql="SELECT 1"):
+        return {
+            "question_id": question_id,
+            "db_id": "school",
+            "question": question,
+            "SQL": sql,
+        }
+
+    def test_an_exact_repeat_is_asked_once(self, tmp_path):
+        """BIRD Mini-Dev ships two: financial 137 and 138."""
+        path = self.written(tmp_path, [self.entry(), self.entry()])
+
+        assert len(load_questions(path)) == 1
+
+    def test_the_first_of_a_repeat_is_the_one_kept(self, tmp_path):
+        path = self.written(tmp_path, [self.entry(), self.entry()])
+
+        assert load_questions(path)[0].question_id == 1
+
+    def test_distinct_questions_are_all_kept(self, tmp_path):
+        path = self.written(
+            tmp_path, [self.entry(1), self.entry(2, question="how few?")]
+        )
+
+        assert len(load_questions(path)) == 2
+
+    def test_the_same_id_on_a_different_question_is_refused(self, tmp_path):
+        """A checkpoint keys on the id, so it would serve the wrong answer."""
+        path = self.written(
+            tmp_path, [self.entry(1), self.entry(1, question="something else")]
+        )
+
+        with pytest.raises(ValueError, match="share school id 1"):
+            load_questions(path)
+
+    def test_the_same_id_on_a_different_gold_is_refused(self, tmp_path):
+        path = self.written(tmp_path, [self.entry(1), self.entry(1, sql="SELECT 2")])
+
+        with pytest.raises(ValueError, match="share school id 1"):
+            load_questions(path)
+
+    def test_the_same_id_in_another_database_is_a_different_question(self, tmp_path):
+        first, second = self.entry(1), self.entry(1)
+        second["db_id"] = "hospital"
+        path = self.written(tmp_path, [first, second])
+
+        assert len(load_questions(path)) == 2
