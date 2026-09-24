@@ -1,119 +1,155 @@
-# What the first 162 dev answers show
+# What the dev half shows
 
-Read on 2026-09-21, while the dev-split run was paused on its daily quota. Every
-row here is from the **dev half** — the split filter runs in the same expression
-that loads the checkpoint, so nothing held out has been read, and
-`evals/quarantine.json` is unchanged.
+The dev split finished on 2026-09-23, five daily windows after it started:
+**64.7% execution accuracy over 266 questions**, 172 right and 94 wrong.
 
-**These are not a score.** 162 of 268 questions had been answered when the
-allowance ran out. The subset is 68.5% correct (111 of 162), and that number is
-a diagnosis aid, not the split's execution accuracy: the 106 unanswered
-questions are not a random sample of what is left, they are whatever came next
-in order. The scorecard stays empty until the split completes.
+This replaces an earlier read of the first 162 answers, which put the same
+agent at 68.5%. That subset was not a random sample, it was whatever came
+first, and it was **3.8 points optimistic**. Where a claim here contradicts the
+partial, this file is the one that ran every failing pair.
+
+Everything below is the dev half only, filtered in the expression that loads
+the results. `evals/quarantine.json` is unchanged.
 
 ## The harness is not the problem
 
 Checked first, in the order `diagnose-failures` gives, because reading a client
 bug as a finding about the model has already happened here once:
 
-- `stopped`: 157 answered, 5 ran out of turns. No `the model call failed`.
-- `error`: none, on any row.
-- final SQL present on all 162, so nothing was produced and then lost.
-- the 5 that ran out of turns still answered `via its last verified query`.
+- `error`: none, on any of the 266.
+- `stopped`: 254 answered, 12 ran out of turns.
+- `produced SQL`: 100%. Nothing was generated and then lost.
+- `nudges`: **zero**. The protocol failure that dominated the first live run -
+  an agent that explores correctly and then answers in prose - is gone.
+- the 12 that ran out of turns still answered `via its last verified query`.
 
-## Where the 51 failures are
+So all 94 are the agent's.
+
+## Where the failures are
 
 | category | count |
 |---|---|
-| right shape, wrong values | 33 |
-| wrong number of columns | 13 |
-| wrong number of rows | 5 |
+| right shape, wrong values | 54 |
+| wrong number of columns | 20 |
+| wrong number of rows | 20 |
 
-By difficulty: 27 moderate, 15 challenging, 9 simple, against a mix of 77
-moderate, 53 simple and 32 challenging. Simple questions are mostly fine; the
-moderate band is where the losses are.
+Difficulty behaves exactly as it should, which is itself a check on the
+dataset's own labels:
 
-## The column failures are mostly a shape convention, not a mistake
+| difficulty | failed / asked | |
+|---|---|---|
+| simple | 12 / 71 | 17% |
+| moderate | 56 / 145 | 39% |
+| challenging | 26 / 50 | 52% |
 
-Reading all 13 rather than the summary, because the summary pointed the wrong
-way. A count of select-list entries said "gold had more columns" 9 times and
-read as the agent under-selecting, which is true in letter and misleading in
-substance:
+By database, the spread is wide enough that "the agent is bad at SQL" does not
+describe it:
 
-- **The agent answers the question; the gold returns the parts.** Gold asks for
-  `forename, surname, url`, the agent returns `url`. Gold asks for
-  `id, finishing, curve`, the agent returns `finishing, curve` — the `id` is in
-  the gold and in no part of the question.
-- **Twice the agent concatenated**: `forename || ' ' || surname AS driver_name`
-  answers the question and loses the two-column shape the scorer compares.
-- **Only twice did it dump the whole row**: `SELECT p.ID, p.SEX, p.Birthday, …`
-  where the gold is `SELECT T1.ID`, on "list all patients who…".
+| database | failed / asked | |
+|---|---|---|
+| thrombosis_prediction | 14 / 23 | 61% |
+| financial | 9 / 16 | 56% |
+| california_schools | 10 / 20 | 50% |
+| debit_card_specializing | 9 / 22 | 41% |
+| codebase_community | 9 / 24 | 38% |
+| card_games | 11 / 30 | 37% |
+| formula_1 | 13 / 37 | 35% |
+| toxicology | 5 / 17 | 29% |
+| european_football_2 | 8 / 35 | 23% |
+| student_club | 3 / 18 | 17% |
+| superhero | 3 / 24 | 12% |
 
-So of 13, perhaps 4 are the agent being wrong about what to return, and the rest
-are BIRD's convention that a result carries the identifying columns whether or
-not the question names them. That is a prompt-shaped gap, not a reasoning one.
+The partial read said two databases carried nearly half the failures. Over the
+full half that is no longer true - `financial`, `california_schools`,
+`card_games` and `codebase_community` were mostly in the unanswered tail, and
+they fail at 37-56%. `thrombosis_prediction` is still the worst at 61%, and
+still the one whose questions lean on conventions ("normal platelet level")
+that live in the evidence field rather than the schema.
 
-## The failures are not spread evenly across databases
+## Running all 94 pairs
 
-| database | asked | failed | fail rate |
-|---|---|---|---|
-| thrombosis_prediction | 23 | 14 | 61% |
-| debit_card_specializing | 22 | 9 | 41% |
-| formula_1 | 37 | 13 | 35% |
-| european_football_2 | 35 | 8 | 23% |
-| student_club | 18 | 3 | 17% |
-| superhero | 24 | 3 | 12% |
+Both queries executed against the real database, and the results compared:
 
-Two databases carry 23 of the 51 failures. That is worth more than the overall
-rate, because it says the gap is not uniform incompetence at SQL.
+| what came back | count |
+|---|---|
+| a different number | 30 |
+| a different number of rows | 27 |
+| same shape, different content | 21 |
+| a different number of columns | 13 |
+| off by exactly a factor of 100 | 2 |
+| equal within rounding | 1 |
 
-Reading the `debit_card_specializing` ones, one pattern is a **denominator
-dispute on an underspecified question**. "What is the percentage of the
-customers who used EUR on 2012/8/25" - the gold counts rows of transactions,
-the agent counts `DISTINCT CustomerID`. Both read the English correctly; only
-one matches the gold.
+The two scaling slips are the ones the partial found, and they survive the full
+run: `thrombosis_prediction` 1150 (94.037 against 0.94037) and `formula_1` 881
+(17.241 against 0.17241). The agent's arithmetic is identical to the gold in
+both; it omits the `* 100` that the word percentage implies. That is the agent
+being wrong, not the question being ambiguous.
 
-**Correction to an earlier draft of this file.** It said these are not failures
-the agent could have avoided, and that a schema-blind agent has no way to learn
-the convention. Both claims were too generous, and checking them took running
-every failing pair rather than reading three of them:
+## The column failures, read one at a time
 
-- **The agent is given BIRD's `evidence` field as a hint** (`agent.solve(...,
-  evidence=question.evidence)`), and all 14 thrombosis failures carry one. It is
-  not working blind on the convention; it is not following the hint.
-- On Q1150 the agent's arithmetic is *identical* to the gold and it simply
-  omits the `* 100` that the word percentage implies. Q881 is the same. So two
-  of the 33 are a scaling slip, which is the agent being wrong, not the
-  question being ambiguous.
+All 20, because the summary statistic pointed the wrong way last time. Gold is
+wider in 14 and the agent is wider in 6.
 
-Running the gold and the agent query for all 33 value failures and comparing
-what came back: 18 are genuinely different numbers, 7 are multi-row or
-multi-column, 4 return something not numeric, 2 are the missing `* 100`, and 2
-come back equal within rounding.
+**The dominant genuine error is dropping a quantity the question named.** Not a
+convention, not a shape dispute - the question asks for it in words:
 
-`thrombosis_prediction` is the one to look at properly once the split is done:
-61% is far off the rest, its columns are medical abbreviations, and its
-questions lean on conventions ("normal platelet level") that live in the
-evidence field rather than the schema.
+- "State the driver with the most points scored. Find his full name **with that
+  points**" - the agent returns the name and not the points.
+- "The oldest SJS patient's work was completed on what date, **and what age**" -
+  date only.
+- "Rank heroes by their height" - the name, without the height it ranked by.
+- "What are the valid e-mail **addresses**" - one of the two.
+- "the top nine districts ... **the number of** female clients" - the district
+  without the number.
+
+Against that, a smaller group really is BIRD's convention rather than a mistake:
+gold carrying an identifying column the question never names (`id`, alongside
+`finishing, curve`), and twice the agent concatenating `forename || ' ' ||
+surname` into one column, which answers the question and loses the shape the
+scorer compares. And the agent over-answers in 6, twice dumping the whole
+patient row where the gold selects `ID` on "list all patients who...".
+
+So the partial's reading - that most of these are convention - does not hold at
+full size. Most of them are the agent under-answering a question that said what
+it wanted.
+
+## The row failures have their own convention trap
+
+Four of the 20 are yes/no questions where the gold returns every matching row
+rather than an answer: "Did Maya Mclean attend the Women's Soccer event?" has a
+14-row gold; "Was the patient's uric acid within a normal range?" has 67. The
+agent answers the question asked, in one row, and is marked wrong.
+
+The rest are ordinary: a missing `DISTINCT` returning 9,103 rows against 94, a
+filter applied to the wrong table, a `LIMIT` the question did not ask for.
 
 ## One failure is the scorer, and it is staying
 
-Of the two that come back equal within rounding, one is real: Q1473 returns
-`459.95626428710585` where the gold is `459.9562642871061`. Thirteen significant
-figures agree; they differ in the last bits of a float. `_same_set` compares
-`set(predicted.rows) == set(gold.rows)`, so that scores as wrong. (The other,
-Q1037, is genuinely different: 24.561 against 24.567.)
+`debit_card_specializing` 1473 returns `459.95626428710585` where the gold is
+`459.9562642871061`. Thirteen significant figures agree; they differ in the
+last bits of a float, and `_same_set` compares tuples exactly, so it scores as
+wrong.
 
-**That exact-equality comparison is BIRD's own, and it should stay.** The whole
-argument for this metric is that the number means something to someone who has
-never seen this repo, and a tolerant comparison would quietly stop being BIRD's
-number. The honest handling is to know the cost: one question in 162, about 0.6
+**That comparison is BIRD's own and it should stay.** The argument for this
+metric is that the number means something to someone who has never seen this
+repo, and a tolerant comparison would quietly stop being BIRD's number. The
+honest handling is to write the cost down: one question in 266, about 0.4
 points, charged against the agent for a float representation.
 
-## What is deliberately not being done yet
+## What to try next, and how
 
-**The agent is not being changed until the split finishes.** A prompt rule about
-result shape would make the remaining 106 answers incomparable with these 162,
-and the run would have to start again from zero rather than from a checkpoint.
-The fix is worth trying; it is worth trying as its own measured change, against
-a completed baseline.
+Each of these is a separate measured change against this 64.7% baseline, on the
+dev half, never folded in together:
+
+1. **A rule that "percentage" means `* 100`.** Worth 2 questions outright, and
+   the cheapest thing here.
+2. **A rule to return every quantity the question names**, not only the entity
+   it identifies. This is the largest addressable group: on the order of 10 of
+   the 20 column failures.
+3. **Follow the formula the evidence hint states.** All 14
+   `thrombosis_prediction` failures carry a hint; the agent is given it
+   (`agent.solve(..., evidence=question.evidence)` at `evals/runner.py:109`)
+   and is not using it as a specification.
+
+The held-out half stays untouched until the agent stops changing. 232 questions
+at about 6 requests each is three daily windows on one key.
