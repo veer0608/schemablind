@@ -485,6 +485,85 @@ def republish(paths: Sequence[Path], *, update_readme: bool = False) -> int:
     return 0
 
 
+def sampled(questions: Sequence[Question], n: int, seed: str = "0") -> list[Question]:
+    """N questions by hash, keeping the original order among those chosen.
+
+    `--limit N` takes the first N, which on a set ordered by database is one or
+    two databases and nothing else -- and the per-database fail rates on the dev
+    half run from 12% to 61%, so that subset is not the half in miniature. This
+    spreads the choice, and being a hash rather than `random.sample` it is the
+    same subset on every machine and every rerun, which is what makes two arms
+    of an experiment comparable.
+    """
+    order = sorted(
+        range(len(questions)),
+        key=lambda i: hashlib.sha256(
+            f"{seed}:{questions[i].db_id}:{questions[i].question_id}".encode()
+        ).hexdigest(),
+    )
+    chosen = set(order[:n])
+    return [q for i, q in enumerate(questions) if i in chosen]
+
+
+def _rows_of(path: Path) -> tuple[str, dict[tuple[str, int], bool]]:
+    """One saved run's verdicts, keyed by question. Name of the card it read."""
+    body = json.loads(path.read_text(encoding="utf-8"))
+    for name, card in body.items():
+        if isinstance(card, dict) and card.get("results"):
+            return name, {
+                (r["db_id"], r["question_id"]): bool(r["correct"])
+                for r in card["results"]
+            }
+    raise ValueError(f"{path}: no run with results in it")
+
+
+def compare(before: Path, after: Path) -> int:
+    """What a change fixed and what it broke, on the questions both ran.
+
+    Two averages cannot tell you this. A change that fixes eleven questions and
+    breaks ten looks like +0.4 points and is actually a coin toss with extra
+    steps, and the only way to see that is per question.
+    """
+    try:
+        first_name, first = _rows_of(before)
+        second_name, second = _rows_of(after)
+    except (OSError, ValueError, json.JSONDecodeError, KeyError) as exc:
+        print(f"cannot compare: {exc}", file=sys.stderr)
+        return 2
+
+    shared = sorted(set(first) & set(second))
+    if not shared:
+        print("nothing to compare: the two runs share no question", file=sys.stderr)
+        return 2
+
+    only_first = len(first) - len(shared)
+    only_second = len(second) - len(shared)
+    if only_first or only_second:
+        print(
+            f"  comparing the {len(shared)} question(s) both ran; "
+            f"{only_first} only in {before.name}, {only_second} only in {after.name}",
+            file=sys.stderr,
+        )
+
+    fixed = [k for k in shared if not first[k] and second[k]]
+    broke = [k for k in shared if first[k] and not second[k]]
+    was = sum(first[k] for k in shared)
+    now = sum(second[k] for k in shared)
+
+    print()
+    print(f"paired on {len(shared)} question(s)")
+    print(f"  {first_name} -> {second_name}")
+    print(f"  before  {was}/{len(shared)}  {_pct(was / len(shared))}")
+    print(f"  after   {now}/{len(shared)}  {_pct(now / len(shared))}")
+    print(f"  fixed   {len(fixed)}")
+    print(f"  broke   {len(broke)}")
+    print(f"  net     {now - was:+d}")
+    if broke:
+        # A change is not free because the average moved up. Name the damage.
+        print("  broke: " + ", ".join(f"{db} {qid}" for db, qid in broke[:12]))
+    return 0
+
+
 def splice(readme: Path, body: str) -> bool:
     start, end = MARKERS
     text = readme.read_text(encoding="utf-8")
@@ -540,6 +619,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--split", choices=SPLITS)
     parser.add_argument("--difficulty", choices=("simple", "moderate", "challenging"))
     parser.add_argument("--limit", type=int, help="first N questions -- for a smoke run")
+    parser.add_argument(
+        "--sample",
+        type=int,
+        metavar="N",
+        help=(
+            "N questions chosen by hash rather than the first N, so a cheap run "
+            "is not one database's worth -- reproducible from --seed"
+        ),
+    )
+    parser.add_argument("--seed", default="0", help="which sample --sample takes")
+    parser.add_argument(
+        "--compare",
+        type=Path,
+        nargs=2,
+        metavar=("BEFORE", "AFTER"),
+        help=(
+            "pair two saved runs by question and report what a change fixed and "
+            "broke, which a difference of two averages cannot tell you"
+        ),
+    )
     parser.add_argument("--no-repair", action="store_true", help="make the first query final")
     parser.add_argument("--max-turns", type=int, default=12)
     parser.add_argument("--delay", type=float, default=0.0, help="seconds between questions")
@@ -574,6 +673,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.from_json:
         return republish(args.from_json, update_readme=args.update_readme)
+    if args.compare:
+        return compare(*args.compare)
 
     if args.questions and args.databases:
         questions, databases = load_questions(args.questions), args.databases
@@ -599,6 +700,14 @@ def main(argv: list[str] | None = None) -> int:
         questions = [q for q in questions if split_of(q) == args.split]
     if args.difficulty:
         questions = [q for q in questions if q.difficulty == args.difficulty]
+    if args.sample:
+        questions = sampled(questions, args.sample, args.seed)
+        print(
+            f"  sample of {len(questions)} (seed {args.seed}) over "
+            f"{len(({q.db_id for q in questions}))} database(s) -- a paired "
+            f"comparison, not a score",
+            file=sys.stderr,
+        )
     if args.limit:
         questions = questions[: args.limit]
 

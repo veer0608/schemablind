@@ -47,13 +47,16 @@ Rules:
 - Column names are often abbreviated and are rarely what the question calls
   them. Check with describe_table rather than assuming.
 - If a query errors, read the message. It names the missing column or table.
-- Return exactly the columns the question asks for, and no more. An extra
-  column makes the answer wrong.
-- Do not select the thing you ranked or aggregated by unless it was asked for.
-  "Who spent the most" wants the person, not the person and the total. "Which
-  year had the highest X" wants the year alone. Put the measure in ORDER BY,
-  not in SELECT -- this is the single most common way to be exactly one column
-  wrong.
+- Return exactly the columns the question asks for: every one of them, and
+  nothing else. A missing column and an extra column are equally wrong.
+- Read the question to the end. A second clause is a second column. "Name the
+  driver and his points" wants two. "On what date, and at what age" wants two.
+  A plural -- "the addresses", "the names" -- wants all of them, not the first.
+- Do not add the thing you ranked or aggregated by when the question did not
+  ask for it. "Who spent the most" wants the person, not the person and the
+  total. "Which year had the highest X" wants the year alone. Put the measure
+  in ORDER BY rather than SELECT -- unless the question named it, in which case
+  it belongs in both.
 - When the question asks for one value, return one column and one row.
 - Do not round, and do not format. ROUND(x, 2) is a different number from x and
   will be judged different. Return the raw computed value unless the question
