@@ -1,0 +1,369 @@
+{
+ "n": 162,
+ "correct": 111,
+ "categories": {
+  "correct": 111,
+  "right shape, wrong values": 33,
+  "wrong number of columns": 13,
+  "wrong number of rows": 5
+ },
+ "wrong": [
+  {
+   "question_id": 1473,
+   "db_id": "debit_card_specializing",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1480,
+   "db_id": "debit_card_specializing",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1481,
+   "db_id": "debit_card_specializing",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1482,
+   "db_id": "debit_card_specializing",
+   "difficulty": "challenging",
+   "category": "wrong number of columns",
+   "turns": 12
+  },
+  {
+   "question_id": 1490,
+   "db_id": "debit_card_specializing",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 10
+  },
+  {
+   "question_id": 1525,
+   "db_id": "debit_card_specializing",
+   "difficulty": "simple",
+   "category": "right shape, wrong values",
+   "turns": 7
+  },
+  {
+   "question_id": 1526,
+   "db_id": "debit_card_specializing",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 7
+  },
+  {
+   "question_id": 1529,
+   "db_id": "debit_card_specializing",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 7
+  },
+  {
+   "question_id": 1531,
+   "db_id": "debit_card_specializing",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1389,
+   "db_id": "student_club",
+   "difficulty": "simple",
+   "category": "right shape, wrong values",
+   "turns": 6
+  },
+  {
+   "question_id": 1399,
+   "db_id": "student_club",
+   "difficulty": "moderate",
+   "category": "wrong number of rows",
+   "turns": 4
+  },
+  {
+   "question_id": 1404,
+   "db_id": "student_club",
+   "difficulty": "moderate",
+   "category": "wrong number of rows",
+   "turns": 7
+  },
+  {
+   "question_id": 1150,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1168,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "challenging",
+   "category": "wrong number of columns",
+   "turns": 12
+  },
+  {
+   "question_id": 1175,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1192,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "challenging",
+   "category": "wrong number of columns",
+   "turns": 8
+  },
+  {
+   "question_id": 1205,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "wrong number of rows",
+   "turns": 11
+  },
+  {
+   "question_id": 1238,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1242,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "challenging",
+   "category": "wrong number of columns",
+   "turns": 7
+  },
+  {
+   "question_id": 1243,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 6
+  },
+  {
+   "question_id": 1251,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "simple",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1254,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1256,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1257,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 8
+  },
+  {
+   "question_id": 1265,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 9
+  },
+  {
+   "question_id": 1275,
+   "db_id": "thrombosis_prediction",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 12
+  },
+  {
+   "question_id": 1037,
+   "db_id": "european_football_2",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 12
+  },
+  {
+   "question_id": 1058,
+   "db_id": "european_football_2",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1068,
+   "db_id": "european_football_2",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 8
+  },
+  {
+   "question_id": 1094,
+   "db_id": "european_football_2",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1135,
+   "db_id": "european_football_2",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 1136,
+   "db_id": "european_football_2",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 1144,
+   "db_id": "european_football_2",
+   "difficulty": "simple",
+   "category": "wrong number of columns",
+   "turns": 8
+  },
+  {
+   "question_id": 1148,
+   "db_id": "european_football_2",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 8
+  },
+  {
+   "question_id": 866,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 11
+  },
+  {
+   "question_id": 879,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 881,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 892,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 6
+  },
+  {
+   "question_id": 896,
+   "db_id": "formula_1",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 5
+  },
+  {
+   "question_id": 897,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 7
+  },
+  {
+   "question_id": 944,
+   "db_id": "formula_1",
+   "difficulty": "challenging",
+   "category": "wrong number of columns",
+   "turns": 12
+  },
+  {
+   "question_id": 950,
+   "db_id": "formula_1",
+   "difficulty": "simple",
+   "category": "wrong number of rows",
+   "turns": 4
+  },
+  {
+   "question_id": 951,
+   "db_id": "formula_1",
+   "difficulty": "simple",
+   "category": "right shape, wrong values",
+   "turns": 6
+  },
+  {
+   "question_id": 959,
+   "db_id": "formula_1",
+   "difficulty": "simple",
+   "category": "wrong number of rows",
+   "turns": 6
+  },
+  {
+   "question_id": 962,
+   "db_id": "formula_1",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 12
+  },
+  {
+   "question_id": 967,
+   "db_id": "formula_1",
+   "difficulty": "simple",
+   "category": "wrong number of columns",
+   "turns": 12
+  },
+  {
+   "question_id": 1002,
+   "db_id": "formula_1",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 4
+  },
+  {
+   "question_id": 726,
+   "db_id": "superhero",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 4
+  },
+  {
+   "question_id": 728,
+   "db_id": "superhero",
+   "difficulty": "moderate",
+   "category": "wrong number of columns",
+   "turns": 5
+  },
+  {
+   "question_id": 772,
+   "db_id": "superhero",
+   "difficulty": "challenging",
+   "category": "right shape, wrong values",
+   "turns": 4
+  },
+  {
+   "question_id": 533,
+   "db_id": "codebase_community",
+   "difficulty": "simple",
+   "category": "right shape, wrong values",
+   "turns": 4
+  }
+ ]
+}
