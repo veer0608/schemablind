@@ -505,6 +505,25 @@ def sampled(questions: Sequence[Question], n: int, seed: str = "0") -> list[Ques
     return [q for i, q in enumerate(questions) if i in chosen]
 
 
+def selection_of(args: argparse.Namespace, asked: int) -> dict:
+    """How a run chose its questions, saved beside what it answered.
+
+    An abandoned run is resumed by repeating its command, and the results it
+    saved do not say what that was: `--sample 75` under another seed is 75
+    other questions, so the checkpoint is passed over and a day's allowance
+    goes on a run that pairs with nothing. The seed is kept only when it chose
+    something.
+    """
+    return {
+        "split": args.split,
+        "difficulty": args.difficulty,
+        "sample": args.sample,
+        "seed": args.seed if args.sample else None,
+        "limit": args.limit,
+        "questions": asked,
+    }
+
+
 def _rows_of(path: Path) -> tuple[str, dict[tuple[str, int], bool]]:
     """One saved run's verdicts, keyed by question. Name of the card it read."""
     body = json.loads(path.read_text(encoding="utf-8"))
@@ -767,11 +786,13 @@ def main(argv: list[str] | None = None) -> int:
     print(report(cards, questions))
 
     if args.json:
+        selection = selection_of(args, len(questions))
         args.json.write_text(
             json.dumps(
                 {
                     c.name: {
                         "abandoned": c.abandoned,
+                        "selection": selection,
                         "summary": c.summary(),
                         "by_split": {s: c.summary(s) for s in SPLITS},
                         "failures": c.failures(),

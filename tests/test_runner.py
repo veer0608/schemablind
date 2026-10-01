@@ -457,6 +457,52 @@ class TestSampling:
         assert chosen == [q for q in qs if q in chosen]
 
 
+class TestARunSaysHowItChoseItsQuestions:
+    """A run resumed under another seed is a run on other questions."""
+
+    def saved(self, tmp_path, *flags):
+        path = tmp_path / "run.json"
+        assert main([*flags, "--json", str(path)]) == 0
+        return path, json.loads(path.read_text(encoding="utf-8"))
+
+    def test_a_sampled_run_records_its_seed_and_size(self, tmp_path, capsys):
+        _, body = self.saved(tmp_path, "--sample", "5", "--seed", "1")
+
+        for card in body.values():
+            assert card["selection"] == {
+                "split": None,
+                "difficulty": None,
+                "sample": 5,
+                "seed": "1",
+                "limit": None,
+                "questions": 5,
+            }
+
+    def test_a_seed_that_chose_nothing_is_not_recorded(self, tmp_path, capsys):
+        _, body = self.saved(tmp_path, "--seed", "7", "--limit", "3")
+
+        selection = body[ORACLE]["selection"]
+        assert selection["seed"] is None
+        assert selection["sample"] is None
+        assert selection["limit"] == 3
+        assert selection["questions"] == 3
+
+    def test_the_split_and_difficulty_are_recorded(self, tmp_path, capsys):
+        _, body = self.saved(tmp_path, "--split", "dev", "--difficulty", "simple")
+
+        selection = body[ORACLE]["selection"]
+        assert selection["split"] == "dev"
+        assert selection["difficulty"] == "simple"
+
+    def test_a_run_that_records_it_still_republishes_and_compares(
+        self, tmp_path, capsys
+    ):
+        path, _ = self.saved(tmp_path, "--sample", "5")
+
+        assert republish([path]) == 0
+        assert compare(path, path) == 0
+
+
 class TestComparingTwoRuns:
     """A change that fixes eleven and breaks ten is not an improvement."""
 
