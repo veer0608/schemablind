@@ -503,6 +503,83 @@ class TestARunSaysHowItChoseItsQuestions:
         assert compare(path, path) == 0
 
 
+class TestAResumeOnOtherQuestionsIsRefused:
+    """Recording the seed made the right command readable. This stops the wrong one."""
+
+    def paths(self, tmp_path):
+        return str(tmp_path / "run.json"), str(tmp_path / "run.ckpt.jsonl")
+
+    def test_the_same_selection_resumes(self, tmp_path, capsys):
+        run, ckpt = self.paths(tmp_path)
+        flags = ["--sample", "5", "--seed", "1", "--json", run, "--checkpoint", ckpt]
+
+        assert main(flags) == 0
+        assert main(flags) == 0
+
+    def test_another_seed_is_refused_and_names_both(self, tmp_path, capsys):
+        run, ckpt = self.paths(tmp_path)
+        assert main(["--sample", "5", "--seed", "1", "--json", run, "--checkpoint", ckpt]) == 0
+        before = (tmp_path / "run.json").read_text(encoding="utf-8")
+        capsys.readouterr()
+
+        assert main(["--sample", "5", "--json", run, "--checkpoint", ckpt]) == 2
+
+        err = capsys.readouterr().err
+        assert "not resuming" in err
+        assert "seed was '1', now '0'" in err
+        assert (tmp_path / "run.json").read_text(encoding="utf-8") == before
+
+    def test_it_refuses_before_it_reaches_for_a_model(self, tmp_path, monkeypatch, capsys):
+        run, ckpt = self.paths(tmp_path)
+        assert main(["--sample", "5", "--seed", "1", "--json", run, "--checkpoint", ckpt]) == 0
+        monkeypatch.setattr(
+            "evals.runner.build_client",
+            lambda *a, **k: pytest.fail("a refused resume must not build a client"),
+        )
+
+        flags = ["--sample", "5", "--solvers", "gemini:any", "--json", run, "--checkpoint", ckpt]
+        assert main(flags) == 2
+
+    def test_a_run_saved_before_the_block_existed_is_not_refused(self, tmp_path, capsys):
+        run, ckpt = self.paths(tmp_path)
+        (tmp_path / "run.json").write_text(
+            json.dumps({ORACLE: {"abandoned": "", "summary": {"n": 5}, "results": []}}),
+            encoding="utf-8",
+        )
+
+        assert main(["--sample", "5", "--json", run, "--checkpoint", ckpt]) == 0
+
+    def test_without_a_checkpoint_it_is_not_a_resume(self, tmp_path, capsys):
+        run, _ = self.paths(tmp_path)
+        assert main(["--sample", "5", "--seed", "1", "--json", run]) == 0
+
+        assert main(["--sample", "5", "--json", run]) == 0
+
+    def test_the_checkpoint_line_says_how_much_of_it_this_run_can_use(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        _, ckpt = self.paths(tmp_path)
+
+        def solver(question, sandbox):
+            return Transcript(sql=question.gold_sql)
+
+        monkeypatch.setattr(
+            "evals.runner.build_solvers", lambda *a, **k: [("fake", solver)]
+        )
+        questions = toy()[0]
+        first = {(q.db_id, q.question_id) for q in questions[:3]}
+        chosen = {(q.db_id, q.question_id) for q in sampled(questions, 5, "1")}
+
+        assert main(["--limit", "3", "--checkpoint", ckpt]) == 0
+        capsys.readouterr()
+        assert main(["--sample", "5", "--seed", "1", "--checkpoint", ckpt]) == 0
+
+        assert (
+            f"3 already answered, {len(first & chosen)} of them among the 5 this run asks"
+            in capsys.readouterr().err
+        )
+
+
 class TestComparingTwoRuns:
     """A change that fixes eleven and breaks ten is not an improvement."""
 
