@@ -114,6 +114,17 @@ class TestItRemembersWhatWasPaidFor:
             "resumed run re-asked questions that were already answered"
         )
 
+    def test_asking_what_it_holds_is_not_a_resume(self, toy_set, tmp_path):
+        questions, databases = toy_set
+        cache = Checkpoint(tmp_path / "run.jsonl").load()
+        score("agent", CountingSolver(), questions[:1], databases, cache=cache)
+        cache.resumed = 0
+
+        assert cache.holds("agent", questions[0])
+        assert not cache.holds("agent", questions[1])
+        assert not cache.holds("someone else", questions[0])
+        assert cache.resumed == 0
+
     def test_two_solvers_in_one_file_do_not_read_each_others_answers(
         self, toy_set, tmp_path
     ):

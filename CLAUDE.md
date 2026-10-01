@@ -43,6 +43,11 @@ wasted run. The short version:
   a split that crosses keys is still one comparable run. A key from the *same*
   project shares the same allowance and buys nothing.
 - Always pass `--checkpoint PATH`. A capped run then resumes instead of restarting.
+- **Resume with the selection the run was started with.** `--sample 75` under another
+  `--seed` is 75 other questions. The saved JSON carries a `selection` block; a resume
+  that differs from it is refused before anything is spent. A JSON from before
+  2026-10-01 has no block, so read the checkpoint line instead: it says how many of
+  the answers on disk this run can use.
 - `--split dev` while iterating. `--split test` only when reporting a finished result.
 
 ## Rules that are not style preferences

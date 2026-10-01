@@ -524,6 +524,47 @@ def selection_of(args: argparse.Namespace, asked: int) -> dict:
     }
 
 
+def saved_selection(path: Path) -> dict | None:
+    """The selection a saved run recorded, or None when it recorded none.
+
+    A file from before the block existed, or one that is not a run at all, has
+    nothing to compare against, and that is not a reason to refuse anything.
+    """
+    try:
+        body = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(body, dict):
+        return None
+    for card in body.values():
+        if isinstance(card, dict) and isinstance(card.get("selection"), dict):
+            return card["selection"]
+    return None
+
+
+def resumes_another_selection(args: argparse.Namespace, asked: int) -> str:
+    """Why this resume is not the run its --json holds, or '' when it is.
+
+    Only a resume is checked: a --checkpoint and a --json that already exists.
+    Recording the seed made the right command readable; this is what stops the
+    wrong one before it spends anything.
+    """
+    if not (args.checkpoint and args.json and args.json.exists()):
+        return ""
+    before = saved_selection(args.json)
+    if before is None:
+        return ""
+    now = selection_of(args, asked)
+    differing = [k for k in now if before.get(k) != now[k]]
+    if not differing:
+        return ""
+    return (
+        f"{args.json} was not chosen the way this run is: "
+        + ", ".join(f"{k} was {before.get(k)!r}, now {now[k]!r}" for k in differing)
+        + ". Repeat its selection to resume it, or give this run its own --json."
+    )
+
+
 def _rows_of(path: Path) -> tuple[str, dict[tuple[str, int], bool]]:
     """One saved run's verdicts, keyed by question. Name of the card it read."""
     body = json.loads(path.read_text(encoding="utf-8"))
@@ -733,7 +774,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.check:
         return _check(questions, databases)
 
-    specs = [s.strip() for s in args.solvers.split(",") if s.strip()]
+    mismatch = resumes_another_selection(args, len(questions))
+    if mismatch:
+        print(f"not resuming: {mismatch}", file=sys.stderr)
+        return 2
+
+    specs =[s.strip() for s in args.solvers.split(",") if s.strip()]
     solvers = build_solvers(
         specs, max_turns=args.max_turns, repair=not args.no_repair
     )
@@ -743,8 +789,18 @@ def main(argv: list[str] | None = None) -> int:
 
     cache = Checkpoint(args.checkpoint).load() if args.checkpoint else None
     if cache is not None and len(cache):
+        # Said before the run, not after: a checkpoint this selection mostly
+        # misses is the one sign of a wrong resume that an older --json, with
+        # no selection in it, can still give.
+        reusable = sum(
+            cache.holds(name, q)
+            for name, _ in solvers
+            if name not in (ORACLE, MUTE)
+            for q in questions
+        )
         print(
-            f"  checkpoint {args.checkpoint}: {len(cache)} already answered",
+            f"  checkpoint {args.checkpoint}: {len(cache)} already answered, "
+            f"{reusable} of them among the {len(questions)} this run asks",
             file=sys.stderr,
         )
 

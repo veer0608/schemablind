@@ -130,6 +130,10 @@ class Checkpoint:
             self.resumed += 1
         return found
 
+    def holds(self, solver: str, question: Question) -> bool:
+        """Whether an answer is here, without counting it as a resume."""
+        return key(solver, question) in self._answers
+
     def __len__(self) -> int:
         return len(self._answers)
 
