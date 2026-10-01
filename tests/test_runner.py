@@ -9,6 +9,8 @@ import pytest
 from evals.dataset import Question, toy
 from evals.runner import (
     MARKERS,
+    compare,
+    sampled,
     Result,
     republish,
     MUTE,
@@ -401,3 +403,130 @@ class TestTheRowSaysWhatItMeasured:
         )
 
         assert card.scope() == "3 dev"
+
+
+class TestSampling:
+    """`--limit N` on a set ordered by database is one database's worth."""
+
+    def questions(self, n, dbs=("a", "b", "c")):
+        return [
+            Question(
+                question_id=i,
+                db_id=dbs[i % len(dbs)],
+                question=f"q{i}",
+                gold_sql="SELECT 1",
+            )
+            for i in range(n)
+        ]
+
+    def test_it_takes_the_number_asked_for(self):
+        assert len(sampled(self.questions(90), 30)) == 30
+
+    def test_it_is_the_same_sample_every_time(self):
+        qs = self.questions(90)
+
+        assert sampled(qs, 30) == sampled(qs, 30)
+
+    def test_another_seed_is_another_sample(self):
+        qs = self.questions(90)
+
+        assert sampled(qs, 30, "1") != sampled(qs, 30, "2")
+
+    def test_it_does_not_depend_on_the_order_it_was_given(self):
+        qs = self.questions(90)
+        one = {(q.db_id, q.question_id) for q in sampled(qs, 30)}
+        other = {(q.db_id, q.question_id) for q in sampled(list(reversed(qs)), 30)}
+
+        assert one == other
+
+    def test_it_spreads_across_databases_where_limit_would_not(self):
+        ordered = sorted(self.questions(90), key=lambda q: q.db_id)
+
+        assert len({q.db_id for q in ordered[:30]}) == 1
+        assert len({q.db_id for q in sampled(ordered, 30)}) == 3
+
+    def test_asking_for_more_than_there_is_gives_everything(self):
+        qs = self.questions(10)
+
+        assert len(sampled(qs, 99)) == 10
+
+    def test_the_original_order_survives(self):
+        qs = self.questions(90)
+        chosen = sampled(qs, 30)
+
+        assert chosen == [q for q in qs if q in chosen]
+
+
+class TestComparingTwoRuns:
+    """A change that fixes eleven and breaks ten is not an improvement."""
+
+    def run(self, tmp_path, name, verdicts):
+        path = tmp_path / f"{name}.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "m": {
+                        "abandoned": "",
+                        "summary": {"n": len(verdicts)},
+                        "results": [
+                            {"db_id": "a", "question_id": qid, "correct": ok}
+                            for qid, ok in verdicts.items()
+                        ],
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    def test_it_names_what_was_fixed_and_what_broke(self, tmp_path, capsys):
+        before = self.run(tmp_path, "before", {1: False, 2: True, 3: True})
+        after = self.run(tmp_path, "after", {1: True, 2: False, 3: True})
+
+        assert compare(before, after) == 0
+
+        out = capsys.readouterr().out
+        assert "fixed   1" in out
+        assert "broke   1" in out
+        assert "net     +0" in out
+        assert "a 2" in out
+
+    def test_a_pure_gain_reports_no_damage(self, tmp_path, capsys):
+        before = self.run(tmp_path, "before", {1: False, 2: False})
+        after = self.run(tmp_path, "after", {1: True, 2: False})
+
+        compare(before, after)
+
+        out = capsys.readouterr().out
+        assert "fixed   1" in out and "broke   0" in out and "net     +1" in out
+
+    def test_only_the_questions_both_ran_are_compared(self, tmp_path, capsys):
+        before = self.run(tmp_path, "before", {1: True, 2: False, 3: False})
+        after = self.run(tmp_path, "after", {1: True, 2: True})
+
+        compare(before, after)
+
+        captured = capsys.readouterr()
+        assert "paired on 2 question(s)" in captured.out
+        assert "1 only in before.json" in captured.err
+
+    def test_two_runs_with_no_question_in_common_is_refused(self, tmp_path, capsys):
+        before = self.run(tmp_path, "before", {1: True})
+        after = self.run(tmp_path, "after", {9: True})
+
+        assert compare(before, after) == 2
+        assert "share no question" in capsys.readouterr().err
+
+    def test_a_file_without_results_is_refused(self, tmp_path, capsys):
+        good = self.run(tmp_path, "before", {1: True})
+        bad = tmp_path / "bad.json"
+        bad.write_text(json.dumps({"m": {"summary": {"n": 1}}}), encoding="utf-8")
+
+        assert compare(good, bad) == 2
+        assert "no run with results" in capsys.readouterr().err
+
+    def test_a_missing_file_is_refused_rather_than_raising(self, tmp_path, capsys):
+        good = self.run(tmp_path, "before", {1: True})
+
+        assert compare(good, tmp_path / "nope.json") == 2
+        assert "cannot compare" in capsys.readouterr().err
