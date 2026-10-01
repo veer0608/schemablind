@@ -1,0 +1,96 @@
+{
+  "gemini-flash-lite-latest": {
+    "abandoned": "",
+    "summary": {
+      "n": 1,
+      "execution_accuracy": 1.0,
+      "strict_accuracy": 1.0,
+      "produced_sql": 1.0,
+      "cost_per_question": null,
+      "total_cost": null,
+      "p50_latency_ms": 16616.591200057883,
+      "turns": 5,
+      "repairs": 0,
+      "tokens": 7911
+    },
+    "by_split": {
+      "dev": {
+        "n": 1,
+        "execution_accuracy": 1.0,
+        "strict_accuracy": 1.0,
+        "produced_sql": 1.0,
+        "cost_per_question": null,
+        "total_cost": null,
+        "p50_latency_ms": 16616.591200057883,
+        "turns": 5,
+        "repairs": 0,
+        "tokens": 7911
+      },
+      "test": {}
+    },
+    "failures": {},
+    "results": [
+      {
+        "question_id": 1472,
+        "db_id": "debit_card_specializing",
+        "question": "In 2012, who had the least consumption in LAM?",
+        "difficulty": "moderate",
+        "split": "dev",
+        "gold_sql": "SELECT T1.CustomerID FROM customers AS T1 INNER JOIN yearmonth AS T2 ON T1.CustomerID = T2.CustomerID WHERE T1.Segment = 'LAM' AND SUBSTR(T2.Date, 1, 4) = '2012' GROUP BY T1.CustomerID ORDER BY SUM(T2.Consumption) ASC LIMIT 1",
+        "predicted_sql": "SELECT c.CustomerID\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'LAM' AND ym.Date LIKE '2012%'\nGROUP BY c.CustomerID\nORDER BY SUM(ym.Consumption) ASC\nLIMIT 1",
+        "correct": true,
+        "exact": true,
+        "failure": "correct",
+        "turns": 5,
+        "repairs": 0,
+        "nudges": 0,
+        "answered_via": "final_sql",
+        "last_query": "SELECT c.CustomerID\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'LAM' AND ym.Date LIKE '2012%'\nGROUP BY c.CustomerID\nORDER BY SUM(ym.Consumption) ASC\nLIMIT 1",
+        "stopped": "answered",
+        "error": null,
+        "tools": [
+          "list_tables",
+          "describe_table",
+          "run_sql_readonly",
+          "run_sql_readonly",
+          "final_sql"
+        ],
+        "tool_args": [
+          {
+            "list_tables": {}
+          },
+          {
+            "describe_table": {
+              "tables": [
+                "customers",
+                "gasstations",
+                "products",
+                "transactions_1k",
+                "yearmonth"
+              ]
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "\nSELECT c.CustomerID, SUM(ym.Consumption)\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'LAM' AND ym.Date LIKE '2012%'\nGROUP BY c.CustomerID\nORDER BY SUM(ym.Consumption) ASC\nLIMIT 5\n"
+            }
+          },
+          {
+            "run_sql_readonly": {
+              "sql": "\nSELECT c.CustomerID\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'LAM' AND ym.Date LIKE '2012%'\nGROUP BY c.CustomerID\nORDER BY SUM(ym.Consumption) ASC\nLIMIT 1\n"
+            }
+          },
+          {
+            "final_sql": {
+              "sql": "\nSELECT c.CustomerID\nFROM yearmonth ym\nJOIN customers c ON ym.CustomerID = c.CustomerID\nWHERE c.Segment = 'LAM' AND ym.Date LIKE '2012%'\nGROUP BY c.CustomerID\nORDER BY SUM(ym.Consumption) ASC\nLIMIT 1\n"
+            }
+          }
+        ],
+        "prompt_tokens": 7619,
+        "completion_tokens": 292,
+        "cost_usd": null,
+        "latency_ms": 16616.6
+      }
+    ]
+  }
+}
